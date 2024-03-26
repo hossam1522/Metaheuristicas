@@ -13,8 +13,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 /************************************************************
 ************************************************************
 CONSTANTES GLOBALES
@@ -27,8 +25,8 @@ const int NUM_DATASETS = 3;
 // Constante para el número de particiones de cada conjunto de datos
 const int NUM_PARTICIONES = 5;
 
-// Porcentaje del uso de total de datos disponibles
-const float ALPHA = 0.8;
+// Ponderación de la importancia entre el acierto y la reducción de la solución encontrada
+const float ALPHA = 0.75;
 
 
 /************************************************************
@@ -44,7 +42,7 @@ ESTRUCTURAS DE DATOS
  */
 struct Dataset {
     arma::mat data;
-    arma::Row<string> categoria;
+    std::vector<std::string> categoria;
 };
 
 
@@ -61,7 +59,7 @@ FUNCIONES DE LECTURA Y NORMALIZACION DE DATOS
  * @param nombre_archivo Nombre del fichero
  * @return Dataset Estructura con los datos leídos
  */
-Dataset leerDatos(string nombre_archivo);
+Dataset leerDatos(std::string nombre_archivo);
 
 /**
  * @brief 
@@ -88,3 +86,14 @@ FUNCIONES PARA CALCUAR DISTANCIAS
  * @return double Distancia euclídea
  */
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y);
+
+/**
+ * @brief 
+ * Función para calcular la distancia euclídea entre dos puntos con pesos
+ * 
+ * @param x Punto 1
+ * @param y Punto 2
+ * @param pesos Pesos para las características
+ * @return double Distancia euclídea
+ */
+double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos);

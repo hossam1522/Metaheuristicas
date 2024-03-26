@@ -70,11 +70,7 @@ Dataset leerDatos(string nombre_archivo) {
     }
   }
 
-  // Convertir las categorías a una fila de Armadillo
-  dataset.categoria.set_size(categorias.size());
-  for (size_t i = 0; i < categorias.size(); ++i) {
-    dataset.categoria(i) = categorias[i];
-  }
+  dataset.categoria = categorias;
 
   return dataset;
 }
@@ -94,9 +90,18 @@ FUNCIONES PARA CALCUAR DISTANCIAS
 ************************************************************
 ************************************************************/
 
-// Ejemplo
-// Para calcular la distancia euclídea entre las filas 0 y 1:
-// num = distanciaEuclidea(dataset.data.row(0), dataset.data.row(1));
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y) {
   return sqrt(arma::accu(arma::pow(x - y, 2)));
+}
+
+double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos) {
+  /*
+  En este caso específico, arma::pow(x - y, 2) calcula la diferencia entre los elementos de x e y 
+  y luego eleva al cuadrado cada elemento. Después, % pesos multiplica cada elemento elevado al 
+  cuadrado por el peso correspondiente en el vector de pesos.
+
+  Cuando se utiliza en el contexto de Armadillo, el operador % representa la multiplicación
+  elemento por elemento
+  */
+  return sqrt(arma::accu(arma::pow(x - y, 2) % pesos));
 }
