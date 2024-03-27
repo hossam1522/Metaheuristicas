@@ -28,13 +28,103 @@ string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
 
 /************************************************************
 ************************************************************
+GREEDY RELIEF
+************************************************************
+************************************************************/
+
+arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
+  double minDist = numeric_limits<double>::max();
+  arma::rowvec enemigo;
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    if (ejemplo.categoria[0] != datos.categoria[i]) {
+      double dist = distanciaEuclidea(ejemplo.data.row(0), datos.data.row(i));
+      if (dist < minDist) {
+        minDist = dist;
+        enemigo = datos.data.row(i);
+      }
+    }
+  }
+
+  return enemigo;
+}
+
+arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
+  double minDist = numeric_limits<double>::max();
+  arma::rowvec amigo;
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    if (ejemplo.categoria[0] == datos.categoria[i] && any(ejemplo.data.row(0) != datos.data.row(i))){
+      double dist = distanciaEuclidea(ejemplo.data.row(0), datos.data.row(i));
+      if (dist < minDist) {
+        minDist = dist;
+        amigo = datos.data.row(i);
+      }
+    }
+  }
+
+  return amigo;
+
+}
+
+arma::rowvec greedyRelief(const Dataset &datos){
+  arma::rowvec pesos(datos.data.n_cols, arma::fill::zeros);
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    Dataset ejemplo;
+    ejemplo.data = datos.data.row(i);
+    ejemplo.categoria.insert(ejemplo.categoria.end(), datos.categoria[i]);
+    arma::rowvec enemigo = enemigoMasCercano(ejemplo, datos);
+    arma::rowvec amigo = amigoMasCercano(ejemplo, datos);
+
+    for (size_t j = 0; j < datos.data.n_cols; ++j) {
+      pesos(j) += abs(datos.data(i, j) - enemigo(j)) - abs(datos.data(i, j) - amigo(j));
+    }
+  }
+
+  double max = pesos.max();
+
+  for (size_t i = 0; i < pesos.size(); ++i) {
+    if (pesos(i) < 0) {
+      pesos(i) = 0;
+    } else {
+      pesos(i) /= max;
+    }
+  }
+
+  return pesos;
+
+}
+
+/************************************************************
+************************************************************
+BUSQUEDA LOCAL
+************************************************************
+************************************************************/
+
+arma::rowvec busquedaLocal(const Dataset &datos);
+
+/************************************************************
+************************************************************
 FUNCIONES PARA MOSTRAR RESULTADOS
 ************************************************************
 ************************************************************/
 
-void printResultados1NN() {
+void printResultados(int algoritmo) {
 
   string nombre_archivo;
+
+  cout << "******************************************************************************" << endl;
+  cout << "******************************************************************************" << endl;
+  if (algoritmo == 0)
+    cout << "*********************** 1-NN sin ponderaciones *******************************" << endl;
+  else if (algoritmo == 1)
+    cout << "*********************** Greedy Relief (1-NN) *********************************" << endl;
+  else if (algoritmo == 2)
+    cout << "*********************** Búsqueda Local (1-NN) ********************************" << endl;
+  cout << "******************************************************************************" << endl;
+  cout << "******************************************************************************" << endl;
+
 
   for(int l = 0; l < NUM_DATASETS; ++l) {
 
@@ -52,37 +142,11 @@ void printResultados1NN() {
       break;
     }
 
-    // Leer y normalizar dataset
-    /* vector< vector<Ejemplo> > dataset;
-    vector<Ejemplo> particion_1 = leerFicheroARFF("../Instancias_APC/" + nombre_archivo + "_1.arff");
-    vector<Ejemplo> particion_2 = leerFicheroARFF("../Instancias_APC/" + nombre_archivo + "_2.arff");
-    vector<Ejemplo> particion_3 = leerFicheroARFF("../Instancias_APC/" + nombre_archivo + "_3.arff");
-    vector<Ejemplo> particion_4 = leerFicheroARFF("../Instancias_APC/" + nombre_archivo + "_4.arff");
-    vector<Ejemplo> particion_5 = leerFicheroARFF("../Instancias_APC/" + nombre_archivo + "_5.arff");
-
-    dataset.push_back(particion_1);
-    dataset.push_back(particion_2);
-    dataset.push_back(particion_3);
-    dataset.push_back(particion_4);
-    dataset.push_back(particion_5); */
-
-    Dataset dataset1 = leerDatos("../Instancias_APC/" + nombre_archivo + "_1.arff");
-    Dataset dataset2 = leerDatos("../Instancias_APC/" + nombre_archivo + "_2.arff");
-    Dataset dataset3 = leerDatos("../Instancias_APC/" + nombre_archivo + "_3.arff");
-    Dataset dataset4 = leerDatos("../Instancias_APC/" + nombre_archivo + "_4.arff");
-    Dataset dataset5 = leerDatos("../Instancias_APC/" + nombre_archivo + "_5.arff");
-
-    // Juntar los 5 datasets anteriores en uno solo
-    /* Dataset dataset;
-    dataset.data = arma::join_cols(dataset1.data, dataset2.data);
-    dataset.data = arma::join_cols(dataset.data, dataset3.data);
-    dataset.data = arma::join_cols(dataset.data, dataset4.data);
-    dataset.data = arma::join_cols(dataset.data, dataset5.data);
-
-    dataset.categoria = arma::join_cols(dataset1.categoria, dataset2.categoria);
-    dataset.categoria = arma::join_cols(dataset.categoria, dataset3.categoria);
-    dataset.categoria = arma::join_cols(dataset.categoria, dataset4.categoria);
-    dataset.categoria = arma::join_cols(dataset.categoria, dataset5.categoria); */
+    Dataset dataset1 = leerDatos("Instancias_APC/" + nombre_archivo + "_1.arff");
+    Dataset dataset2 = leerDatos("Instancias_APC/" + nombre_archivo + "_2.arff");
+    Dataset dataset3 = leerDatos("Instancias_APC/" + nombre_archivo + "_3.arff");
+    Dataset dataset4 = leerDatos("Instancias_APC/" + nombre_archivo + "_4.arff");
+    Dataset dataset5 = leerDatos("Instancias_APC/" + nombre_archivo + "_5.arff");
 
     vector<Dataset> dataset;
     dataset.push_back(dataset1);
@@ -92,15 +156,19 @@ void printResultados1NN() {
     dataset.push_back(dataset5);
 
     // Normalizar los datos
-    //normalizarDatos(dataset);
     for (size_t i = 0; i < dataset.size(); ++i) {
       normalizarDatos(dataset[i]);
     }
 
     cout << endl << endl;
-    cout << "************************************ " << nombre_archivo << " (1-NN) *******************............." << endl;
+    if (algoritmo == 0)
+      cout << "************************************ " << nombre_archivo << " (1-NN) ************************************" << endl;
+    else if (algoritmo == 1)
+      cout << "************************************ " << nombre_archivo << " (Greedy Relief) ************************************" << endl;
+    else if (algoritmo == 2)
+      cout << "************************************ " << nombre_archivo << " (Búsqueda Local) ************************************" << endl;
 
-    cout << endl << "............................................................................................." << endl;
+    cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (ms) :::" << endl;
     cout << "....................................................................................................." << endl;
 
@@ -112,42 +180,56 @@ void printResultados1NN() {
 
     // Ejecución del algoritmo 1-NN en las diferentes particiones
     for(size_t i = 0; i < NUM_PARTICIONES; ++i) {
-      // Elegimos en la iteración i como test al archivo i
-      //vector<Ejemplo> test = dataset[i];
+      // Elegimos en la iteración i como test al archivo l
       Dataset test = dataset[i];
 
       // El resto de archivos serán para entrenamiento
       vector<Dataset> entrenam;
       for(size_t j = 0; j < NUM_PARTICIONES; ++j)
         if (j != i) {
-            Dataset ejemplos_entrenamiento = dataset[j];
-            //entrenamiento.insert(entrenamiento.end(), ejemplos_entrenamiento.begin(), ejemplos_entrenamiento.end());
-            entrenam.push_back(ejemplos_entrenamiento);
+          Dataset ejemplos_entrenamiento = dataset[j];
+          entrenam.push_back(ejemplos_entrenamiento);
         }
 
       // Juntamos los datasets de entrenamiento en un único dataset
       Dataset entrenamiento = entrenam[0];
       for(size_t j = 1; j < NUM_PARTICIONES-1; ++j) {
         entrenamiento.data = arma::join_cols(entrenamiento.data, entrenam[j].data);
-        //entrenamiento.categoria = arma::join_cols(entrenamiento.categoria, entrenam[j].categoria);
         entrenamiento.categoria.insert(entrenamiento.categoria.end(), entrenam[j].categoria.begin(), entrenam[j].categoria.end());
       }
 
-      //vector<double> w(test[0].num_caracts);
       arma::rowvec w(test.data.n_cols);
+      
+      clock_t momentoInicio, momentoFin;
 
-      // Vector de pesos para el algoritmo 1-NN
-      for(size_t j = 0; j < w.size(); ++j)
-        w[j] = 1.0;
+      if (algoritmo == 0){
+        // Vector de pesos para el algoritmo 1-NN
+        for(size_t j = 0; j < w.size(); ++j)
+          w[j] = 1.0;
+      }
+      else if (algoritmo == 1){
+        momentoInicio = clock();
+        // Vector de pesos para el algoritmo Greedy Relief
+        w = greedyRelief(entrenamiento);
+        momentoFin = clock();
+      }
+      else if (algoritmo == 2){
+        momentoInicio = clock();
+        // Vector de pesos para el algoritmo Búsqueda Local
+        //w = busquedaLocal(entrenamiento);
+        momentoFin = clock();
+      }
 
-      auto momentoInicio = clock();
+      if (algoritmo==0)
+        momentoInicio = clock();
 
       // Calculo los valores de las tasas y del fitness, donde se ejecuta el algoritmo 1-NN, y los sumo a las variables acumuladas
       double tasa_clasificacion = tasa_clas(test, entrenamiento, w);
       double tasa_reduccion = tasa_red(w);
       double fit = fitness(tasa_clasificacion, tasa_reduccion);
 
-      auto momentoFin = clock();
+      if (algoritmo==0)
+        momentoFin = clock();
 
       // Calculo el tiempo que le ha tomado al algoritmo ejecutarse
       double tiempo = 1000.0*(momentoFin - momentoInicio)/CLOCKS_PER_SEC;
@@ -165,7 +247,7 @@ void printResultados1NN() {
 
     cout << ":::" << setw(8) << "MEDIA" << setw(6) << ":::" << setw(15) << (tasa_clas_acum/NUM_PARTICIONES) << setw(15) << ":::" << setw(13) << (tasa_red_acum/NUM_PARTICIONES);
     cout << setw(13) << ":::" << setw(7) << (fit_acum/NUM_PARTICIONES) << setw(5) << "::: " << setw(9) << (tiempo_acum/NUM_PARTICIONES) << setw(7) << ":::" << endl;
-    cout << "......................................................................................................." << endl << endl;
+    cout << "....................................................................................................." << endl << endl;
   }
 }
 

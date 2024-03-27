@@ -50,6 +50,57 @@ CLASIFICADOR 1-NN
 std::string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
                             const arma::rowvec &pesos);
 
+
+/************************************************************
+************************************************************
+GREEDY RELIEF
+************************************************************
+************************************************************/
+
+/**
+ * @brief 
+ * Función para calcular el vecino más cercano a un ejemplo con diferente clase
+ * 
+ * @param ejemplo Ejemplo a clasificar
+ * @param datos Conjunto de datos de entrenamiento
+ * @return arma::rowvec Vecino más cercano
+ */
+arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
+
+/**
+ * @brief 
+ * Función para calcular el vecino más cercano a un ejemplo con la misma clase
+ * 
+ * @param ejemplo Ejemplo a clasificar
+ * @param datos Conjunto de datos de entrenamiento
+ * @return arma::rowvec Vecino más cercano
+ */
+arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
+
+/**
+ * @brief 
+ * Función para calcular el valor de los pesos de las características con Greedy Relief
+ * 
+ * @param datos Conjunto de datos de entrenamiento
+ * @return arma::rowvec Pesos de las características
+ */
+arma::rowvec greedyRelief(const Dataset &datos);
+
+/************************************************************
+************************************************************
+BUSQUEDA LOCAL
+************************************************************
+************************************************************/
+
+/**
+ * @brief 
+ * Función para calcular el valor de los pesos de las características con Búsqueda Local 
+ * 
+ * @param datos Conjunto de datos de entrenamiento
+ * @return arma::rowvec Pesos de las características
+ */
+arma::rowvec busquedaLocal(const Dataset &datos);
+
 /************************************************************
 ************************************************************
 FUNCIONES PARA MOSTRAR RESULTADOS
@@ -58,25 +109,13 @@ FUNCIONES PARA MOSTRAR RESULTADOS
 
 /**
  * @brief 
- * Función para calcular y mostrar los resultados del clasificador 1-NN
+ * Función para mostrar los resultados de la tasa de clasificación y reducción
+ * sin ponderaciones, con Greedy Relief y con Búsqueda Local
  * 
+ * @param algoritmo Algoritmo a mostrar, 0 para sin ponderaciones, 
+ *                  1 para Greedy Relief y 2 para Búsqueda Local
  */
-void printResultados1NN();
-
-/**
- * @brief 
- * Función para calcular y mostrar los resultados del clasificador Greedy
- * 
- */
-void printResultadosGreedy();
-
-/**
- * @brief 
- * Función para calcular y mostrar los resultados del clasificador BL
- * 
- */
-void printResultadosBL();
-
+void printResultados(int algoritmo);
 
 /************************************************************
 ************************************************************

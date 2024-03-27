@@ -20,7 +20,6 @@ FUNCIONES DE LECTURA Y NORMALIZACION DE DATOS
 Dataset leerDatos(string nombre_archivo) {
   Dataset dataset;
   ifstream archivo(nombre_archivo);
-
   string linea;
 
   // Variables para almacenar los datos leídos
@@ -46,15 +45,14 @@ Dataset leerDatos(string nombre_archivo) {
       istringstream ss(linea);
       vector<string> fila;
       string valor;
-      char coma;
       while (getline(ss, valor, ',')) {
         fila.push_back(valor);
       }
       if (!fila.empty()) {
-        datos.push_back(fila);
         // Guardar el último valor como categoría
         categorias.push_back(fila.back());
         fila.pop_back();
+        datos.push_back(fila);
       }
     }
   }

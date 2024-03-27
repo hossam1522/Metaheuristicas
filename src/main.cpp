@@ -12,9 +12,14 @@ int main(int argc, char const **argv) {
   long int semilla = strtol(argv[1], nullptr, 10);
   Random::seed(semilla);
 
-  printResultados1NN();
-  //printResultadosGreedy();
-  //printResultadosBL();
+  // Para algoritmo 1NN sin ponderación
+  printResultados(0);
+
+  // Para algoritmo 1NN usando Greedy Relief
+  printResultados(1);
+
+  // Para algoritmo 1NN usando Búsqueda Local
+  //printResultados(2);
 
   return 0;
 }
