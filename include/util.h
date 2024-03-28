@@ -68,7 +68,7 @@ Dataset leerDatos(std::string nombre_archivo);
  * @param dataset Conjunto de datos a normalizar
  * 
  */
-void normalizarDatos(Dataset &dataset);
+void normalizarDatos(std::vector<Dataset> &datasets);
 
 
 /************************************************************

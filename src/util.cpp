@@ -55,8 +55,9 @@ Dataset leerDatos(string nombre_archivo) {
         datos.push_back(fila);
       }
     }
-  }
 
+  }
+  
   // Convertir los datos a una matriz de Armadillo
   size_t numFilas = datos.size();
   size_t numColumnas = datos[0].size();
@@ -73,12 +74,20 @@ Dataset leerDatos(string nombre_archivo) {
   return dataset;
 }
 
-void normalizarDatos(Dataset &dataset) {
-  // Normalizar los datos
-  for (size_t i = 0; i < dataset.data.n_cols; ++i) {
-    double min = dataset.data.col(i).min();
-    double max = dataset.data.col(i).max();
-    dataset.data.col(i) = (dataset.data.col(i) - min) / (max - min);
+void normalizarDatos(vector<Dataset> &datasets) {
+  // Hacerlo con min y max de cada columna pero teniendo en cuenta todos los datasets
+  for (size_t i=0; i<datasets[0].data.n_cols; ++i) {
+    double min = datasets[0].data.col(i).min();
+    double max = datasets[0].data.col(i).max();
+    for (size_t j=1; j<datasets.size(); ++j) {
+      double minAux = datasets[j].data.col(i).min();
+      double maxAux = datasets[j].data.col(i).max();
+      if (minAux < min) min = minAux;
+      if (maxAux > max) max = maxAux;
+    }
+    for (size_t j=0; j<datasets.size(); ++j) {
+      datasets[j].data.col(i) = (datasets[j].data.col(i) - min) / (max - min);
+    }
   }
 }
 
@@ -101,5 +110,8 @@ double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, 
   Cuando se utiliza en el contexto de Armadillo, el operador % representa la multiplicación
   elemento por elemento
   */
-  return sqrt(arma::accu(arma::pow(x - y, 2) % pesos));
+  // Hacerlo solo en caso de que el peso sea mayor que 0.1
+  arma::rowvec pesosFiltrados = pesos;
+  pesosFiltrados.for_each([](double &valor) { valor = valor > 0.1 ? valor : 0; });
+  return sqrt(arma::accu(arma::pow(x - y, 2) % pesosFiltrados));
 }

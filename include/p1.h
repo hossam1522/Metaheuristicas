@@ -84,7 +84,7 @@ arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
  * @param datos Conjunto de datos de entrenamiento
  * @return arma::rowvec Pesos de las características
  */
-arma::rowvec greedyRelief(const Dataset &datos);
+arma::rowvec greedy(const Dataset &datos);
 
 /************************************************************
 ************************************************************

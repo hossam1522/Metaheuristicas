@@ -13,7 +13,7 @@ int main(int argc, char const **argv) {
   Random::seed(semilla);
 
   // Para algoritmo 1NN sin ponderación
-  printResultados(0);
+  //printResultados(0);
 
   // Para algoritmo 1NN usando Greedy Relief
   printResultados(1);

@@ -12,18 +12,18 @@ CLASIFICADOR 1-NN
 
 string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
                             const arma::rowvec &pesos){
-    double minDist = numeric_limits<double>::max();
-    string categoria;
+  double minDist = numeric_limits<double>::max();
+  string categoria;
 
-    for (size_t i = 0; i < datos.data.n_rows; ++i) {
-        double dist = distanciaEuclideaPonderada(ejemplo, datos.data.row(i), pesos);
-        if (dist < minDist) {
-            minDist = dist;
-            categoria = datos.categoria[i];
-        }
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    double dist = distanciaEuclideaPonderada(ejemplo, datos.data.row(i), pesos);
+    if (dist < minDist) {
+      minDist = dist;
+      categoria = datos.categoria[i];
     }
+  }
 
-    return categoria;
+  return categoria;
 }
 
 /************************************************************
@@ -67,7 +67,7 @@ arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
 
 }
 
-arma::rowvec greedyRelief(const Dataset &datos){
+arma::rowvec greedy(const Dataset &datos){
   arma::rowvec pesos(datos.data.n_cols, arma::fill::zeros);
 
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
@@ -113,6 +113,7 @@ FUNCIONES PARA MOSTRAR RESULTADOS
 void printResultados(int algoritmo) {
 
   string nombre_archivo;
+  vector<arma::rowvec> total_pesos;
 
   cout << "******************************************************************************" << endl;
   cout << "******************************************************************************" << endl;
@@ -156,9 +157,7 @@ void printResultados(int algoritmo) {
     dataset.push_back(dataset5);
 
     // Normalizar los datos
-    for (size_t i = 0; i < dataset.size(); ++i) {
-      normalizarDatos(dataset[i]);
-    }
+    normalizarDatos(dataset);
 
     cout << endl << endl;
     if (algoritmo == 0)
@@ -171,6 +170,7 @@ void printResultados(int algoritmo) {
     cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (ms) :::" << endl;
     cout << "....................................................................................................." << endl;
+
 
     // Declaración de los resultados que vamos a acumular para mostrar finalmente un resultado medio
     double tasa_clas_acum = 0.0;
@@ -210,7 +210,7 @@ void printResultados(int algoritmo) {
       else if (algoritmo == 1){
         momentoInicio = clock();
         // Vector de pesos para el algoritmo Greedy Relief
-        w = greedyRelief(entrenamiento);
+        w = greedy(entrenamiento);
         momentoFin = clock();
       }
       else if (algoritmo == 2){
@@ -219,6 +219,8 @@ void printResultados(int algoritmo) {
         //w = busquedaLocal(entrenamiento);
         momentoFin = clock();
       }
+
+      total_pesos.push_back(w);
 
       if (algoritmo==0)
         momentoInicio = clock();
@@ -232,7 +234,8 @@ void printResultados(int algoritmo) {
         momentoFin = clock();
 
       // Calculo el tiempo que le ha tomado al algoritmo ejecutarse
-      double tiempo = 1000.0*(momentoFin - momentoInicio)/CLOCKS_PER_SEC;
+      // y lo muestro en segundos usando notacion cientifica
+      double tiempo = (momentoFin - momentoInicio) / (double)CLOCKS_PER_SEC * 1000.0;
 
       tasa_clas_acum += tasa_clasificacion;
       tasa_red_acum += tasa_reduccion;
@@ -248,7 +251,25 @@ void printResultados(int algoritmo) {
     cout << ":::" << setw(8) << "MEDIA" << setw(6) << ":::" << setw(15) << (tasa_clas_acum/NUM_PARTICIONES) << setw(15) << ":::" << setw(13) << (tasa_red_acum/NUM_PARTICIONES);
     cout << setw(13) << ":::" << setw(7) << (fit_acum/NUM_PARTICIONES) << setw(5) << "::: " << setw(9) << (tiempo_acum/NUM_PARTICIONES) << setw(7) << ":::" << endl;
     cout << "....................................................................................................." << endl << endl;
+  
+    // Mostrar los pesos de cada particion separados por comas
+    /* if (algoritmo != 0){
+      cout << "Pesos obtenidos en cada partición:" << endl;
+      for (size_t i = 0; i < total_pesos.size(); ++i) {
+        cout << "Partición " << i+1 << ": ";
+        for (size_t j = 0; j < total_pesos[i].size(); ++j) {
+          cout << total_pesos[i](j);
+          if (j != total_pesos[i].size()-1) {
+            cout << ", ";
+          }
+        }
+        cout << endl;
+      }
+    } */
+
+    total_pesos.clear();
   }
+
 }
 
 /************************************************************
@@ -277,14 +298,13 @@ double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
   for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
     Dataset test;
     test.data = entrenamiento.data.row(i);
-    test.categoria = entrenamiento.categoria;
+    test.categoria.push_back(entrenamiento.categoria[i]);
 
     Dataset entrenar;
     entrenar.data = entrenamiento.data;
     entrenar.categoria = entrenamiento.categoria;
 
     entrenar.data.shed_row(i);
-    //entrenar.categoria.shed_row(i);
     entrenar.categoria.erase(entrenar.categoria.begin() + i);
 
     string categoria = clasificador1NN(test.data.row(0), entrenar, pesos);
