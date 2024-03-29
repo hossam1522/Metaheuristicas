@@ -16,10 +16,10 @@ int main(int argc, char const **argv) {
   //printResultados(0);
 
   // Para algoritmo 1NN usando Greedy Relief
-  printResultados(1);
+  //printResultados(1);
 
   // Para algoritmo 1NN usando Búsqueda Local
-  //printResultados(2);
+  printResultados(2);
 
   return 0;
 }

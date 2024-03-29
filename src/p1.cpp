@@ -49,12 +49,13 @@ arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
   return enemigo;
 }
 
+
 arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
   double minDist = numeric_limits<double>::max();
-  arma::rowvec amigo;
+  arma::rowvec amigo = arma::rowvec(datos.data.n_cols, arma::fill::zeros);
 
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
-    if (ejemplo.categoria[0] == datos.categoria[i] && any(ejemplo.data.row(0) != datos.data.row(i))){
+    if (ejemplo.categoria[0] == datos.categoria[i] && any(datos.data.row(i) != ejemplo.data.row(0))){
       double dist = distanciaEuclidea(ejemplo.data.row(0), datos.data.row(i));
       if (dist < minDist) {
         minDist = dist;
@@ -73,24 +74,25 @@ arma::rowvec greedy(const Dataset &datos){
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
     Dataset ejemplo;
     ejemplo.data = datos.data.row(i);
-    ejemplo.categoria.insert(ejemplo.categoria.end(), datos.categoria[i]);
+    ejemplo.categoria.push_back(datos.categoria[i]);
     arma::rowvec enemigo = enemigoMasCercano(ejemplo, datos);
     arma::rowvec amigo = amigoMasCercano(ejemplo, datos);
 
     for (size_t j = 0; j < datos.data.n_cols; ++j) {
-      pesos(j) += abs(datos.data(i, j) - enemigo(j)) - abs(datos.data(i, j) - amigo(j));
+      pesos(j) += abs(datos.data(i,j) - enemigo(j)) - abs(datos.data(i, j) - amigo(j));
     }
   }
 
   double max = pesos.max();
 
-  for (size_t i = 0; i < pesos.size(); ++i) {
+  for (size_t i = 0; i < pesos.n_cols; ++i) {
     if (pesos(i) < 0) {
       pesos(i) = 0;
     } else {
       pesos(i) /= max;
     }
   }
+
 
   return pesos;
 
@@ -102,7 +104,70 @@ BUSQUEDA LOCAL
 ************************************************************
 ************************************************************/
 
-arma::rowvec busquedaLocal(const Dataset &datos);
+arma::rowvec busquedaLocal(const Dataset &datos){
+  normal_distribution<double> distribucion_normal(0.0, SIGMA);
+  uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
+
+  vector<int> indices;
+  arma::rowvec pesos(datos.data.n_cols);
+
+  // La solución inicial se generará de forma aleatoria utilizando una distribución uniforme en [0, 1]
+  for (size_t i = 0; i < pesos.size(); ++i) 
+    pesos(i) = Random::get(distribucion_uniforme);
+
+  for (size_t i = 0; i < pesos.size(); ++i) 
+    indices.push_back(i);
+
+  Random::shuffle(indices);
+
+  double tasa_clasif = tasa_clas(datos, pesos);
+  double tasa_reducc = tasa_red(pesos);
+  double mejor_fit = fitness(tasa_clasif, tasa_reducc);
+  
+  int num_iteraciones = 0;
+  size_t num_vecinos = 0;
+  bool mejora = false;
+  while ( num_iteraciones < MAX_ITER && num_vecinos < pesos.n_cols*CONST_MAX_VECINOS){
+    int componente = indices[num_iteraciones % pesos.n_cols];
+
+    // Mutamos la solución actual
+    arma::rowvec pesos_mutados = pesos;
+    pesos_mutados(componente) += Random::get(distribucion_normal);
+
+    // Truncamos el valor de la componente mutada
+    if (pesos_mutados(componente) < 0) pesos_mutados(componente) = 0;
+    if (pesos_mutados(componente) > 1) pesos_mutados(componente) = 1;
+
+    // Calculamos el fitness de la solución mutada
+    tasa_clasif = tasa_clas(datos, pesos_mutados);
+    tasa_reducc = tasa_red(pesos_mutados);
+    double fit = fitness(tasa_clasif, tasa_reducc);
+
+    // Si la solución mutada es mejor que la actual, la actualizamos
+    if (fit > mejor_fit) {
+      pesos = pesos_mutados;
+      mejor_fit = fit;
+      mejora = true;
+      num_vecinos = 0;
+    }
+    else {
+      ++num_vecinos;
+    }
+
+    ++num_iteraciones;
+
+    // Actualizamos los índices para la siguiente iteración si ha habido mejora
+    // o si hemos llegado al final de la lista de índices
+    if (mejora || num_iteraciones % pesos.n_cols == 0) {
+      mejora = false;
+      Random::shuffle(indices);
+    }
+    
+  }
+
+  return pesos;
+
+}
 
 /************************************************************
 ************************************************************
@@ -168,7 +233,7 @@ void printResultados(int algoritmo) {
       cout << "************************************ " << nombre_archivo << " (Búsqueda Local) ************************************" << endl;
 
     cout << endl << "....................................................................................................." << endl;
-    cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (ms) :::" << endl;
+    cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
     cout << "....................................................................................................." << endl;
 
 
@@ -216,7 +281,7 @@ void printResultados(int algoritmo) {
       else if (algoritmo == 2){
         momentoInicio = clock();
         // Vector de pesos para el algoritmo Búsqueda Local
-        //w = busquedaLocal(entrenamiento);
+        w = busquedaLocal(entrenamiento);
         momentoFin = clock();
       }
 
@@ -235,7 +300,7 @@ void printResultados(int algoritmo) {
 
       // Calculo el tiempo que le ha tomado al algoritmo ejecutarse
       // y lo muestro en segundos usando notacion cientifica
-      double tiempo = (momentoFin - momentoInicio) / (double)CLOCKS_PER_SEC * 1000.0;
+      double tiempo = (momentoFin - momentoInicio) / (double)CLOCKS_PER_SEC /* * 1000.0 */;
 
       tasa_clas_acum += tasa_clasificacion;
       tasa_red_acum += tasa_reduccion;
@@ -253,7 +318,7 @@ void printResultados(int algoritmo) {
     cout << "....................................................................................................." << endl << endl;
   
     // Mostrar los pesos de cada particion separados por comas
-    /* if (algoritmo != 0){
+    if (algoritmo == 1){
       cout << "Pesos obtenidos en cada partición:" << endl;
       for (size_t i = 0; i < total_pesos.size(); ++i) {
         cout << "Partición " << i+1 << ": ";
@@ -265,7 +330,7 @@ void printResultados(int algoritmo) {
         }
         cout << endl;
       }
-    } */
+    }
 
     total_pesos.clear();
   }
