@@ -6,6 +6,9 @@
  * Archivo de cabecera con funciones de utilidad
  */
 
+#ifndef UTIL_H
+#define UTIL_H
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -26,7 +29,7 @@ const int NUM_DATASETS = 3;
 const int NUM_PARTICIONES = 5;
 
 // Ponderación de la importancia entre el acierto y la reducción de la solución encontrada
-const float ALPHA = 0.75;
+const double ALPHA = 0.75;
 
 
 /************************************************************
@@ -89,11 +92,14 @@ double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y);
 
 /**
  * @brief 
- * Función para calcular la distancia euclídea entre dos puntos con pesos
+ * Función para calcular la distancia euclídea entre dos puntos de
+ * forma ponderada usando los pesos de las características
  * 
  * @param x Punto 1
  * @param y Punto 2
  * @param pesos Pesos para las características
  * @return double Distancia euclídea
  */
-double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos);
+double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos);
+
+#endif

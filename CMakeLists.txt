@@ -18,7 +18,7 @@ file(GLOB_RECURSE SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/*)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Flags del compilador
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -larmadillo")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -larmadillo -Ofast")
 
 # Ejecutable
 add_executable(P1_MH ${SOURCE_FILES})

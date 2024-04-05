@@ -6,6 +6,9 @@
  * 
  */
 
+#ifndef P1_H
+#define P1_H
+
 #include <iostream>
 #include <iomanip>
 #include <armadillo>
@@ -50,6 +53,18 @@ CLASIFICADOR 1-NN
 std::string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
                             const arma::rowvec &pesos);
 
+/**
+ * @brief
+ * Función para clasificar un ejemplo con el clasificador 1-NN usando la técnica de Leave-One-Out
+ * 
+ * @param ejemplo Ejemplo a clasificar
+ * @param datos Conjunto de datos de entrenamiento
+ * @param pesos Pesos para las características
+ * @return std::string Categoría a la que pertenece el ejemplo
+ */
+std::string clasificador1NN(const int ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos);
+
 
 /************************************************************
 ************************************************************
@@ -65,7 +80,7 @@ GREEDY RELIEF
  * @param datos Conjunto de datos de entrenamiento
  * @return arma::rowvec Vecino más cercano
  */
-arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
+int enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
 
 /**
  * @brief 
@@ -75,7 +90,7 @@ arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
  * @param datos Conjunto de datos de entrenamiento
  * @return arma::rowvec Vecino más cercano
  */
-arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
+int amigoMasCercano(const Dataset &ejemplo, const Dataset &datos);
 
 /**
  * @brief 
@@ -163,4 +178,6 @@ double tasa_red(const arma::rowvec &pesos);
  * @param tasa_red Tasa de reducción
  * @return double Valor de la función objetivo
  */
-double fitness(const double &tasa_clas, const double &tasa_red);
+double fitness(const double tasa_clas, const double tasa_red);
+
+#endif

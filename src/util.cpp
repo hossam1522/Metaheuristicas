@@ -99,9 +99,11 @@ FUNCIONES PARA CALCUAR DISTANCIAS
 
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y) {
   return sqrt(arma::accu(arma::pow(x - y, 2)));
+  /* arma::rowvec pesos = arma::ones<arma::rowvec>(x.n_cols);
+  return distanciaEuclidea(x, y, pesos); */
 }
 
-double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos) {
+double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos) {
   /*
   En este caso específico, arma::pow(x - y, 2) calcula la diferencia entre los elementos de x e y 
   y luego eleva al cuadrado cada elemento. Después, % pesos multiplica cada elemento elevado al 
@@ -114,4 +116,14 @@ double distanciaEuclideaPonderada(const arma::rowvec &x, const arma::rowvec &y, 
   arma::rowvec pesosFiltrados = pesos;
   pesosFiltrados.for_each([](double &valor) { valor = valor > 0.1 ? valor : 0; });
   return sqrt(arma::accu(arma::pow(x - y, 2) % pesosFiltrados));
+  //return sqrt(arma::accu(arma::pow(x - y, 2) % pesos));
+  /* double val = 0;
+
+  for (size_t i=0; i<x.n_cols; ++i) {
+      if (pesos[i] >= 0) {
+          val += pesos[i] * pow(x(i) - y(i), 2);
+      }
+  }
+
+  return sqrt(val); */
 }

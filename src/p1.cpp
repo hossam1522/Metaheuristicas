@@ -16,10 +16,28 @@ string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
   string categoria;
 
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
-    double dist = distanciaEuclideaPonderada(ejemplo, datos.data.row(i), pesos);
+    double dist = distanciaEuclidea(ejemplo, datos.data.row(i), pesos);
     if (dist < minDist) {
       minDist = dist;
       categoria = datos.categoria[i];
+    }
+  }
+
+  return categoria;
+}
+
+string clasificador1NN(const int ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos){
+  double minDist = numeric_limits<double>::max();
+  string categoria;
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    if ((size_t)ejemplo != i){
+      double dist = distanciaEuclidea(datos.data.row(ejemplo), datos.data.row(i), pesos);
+      if (dist < minDist) {
+        minDist = dist;
+        categoria = datos.categoria[i];
+      }
     }
   }
 
@@ -32,16 +50,16 @@ GREEDY RELIEF
 ************************************************************
 ************************************************************/
 
-arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
+int enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
   double minDist = numeric_limits<double>::max();
-  arma::rowvec enemigo;
+  int enemigo = -1;
 
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
     if (ejemplo.categoria[0] != datos.categoria[i]) {
       double dist = distanciaEuclidea(ejemplo.data.row(0), datos.data.row(i));
       if (dist < minDist) {
         minDist = dist;
-        enemigo = datos.data.row(i);
+        enemigo = i;
       }
     }
   }
@@ -50,16 +68,16 @@ arma::rowvec enemigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
 }
 
 
-arma::rowvec amigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
+int amigoMasCercano(const Dataset &ejemplo, const Dataset &datos){
   double minDist = numeric_limits<double>::max();
-  arma::rowvec amigo = arma::rowvec(datos.data.n_cols, arma::fill::zeros);
+  int amigo = -1;
 
   for (size_t i = 0; i < datos.data.n_rows; ++i) {
     if (ejemplo.categoria[0] == datos.categoria[i] && any(datos.data.row(i) != ejemplo.data.row(0))){
       double dist = distanciaEuclidea(ejemplo.data.row(0), datos.data.row(i));
       if (dist < minDist) {
         minDist = dist;
-        amigo = datos.data.row(i);
+        amigo = i;
       }
     }
   }
@@ -75,11 +93,15 @@ arma::rowvec greedy(const Dataset &datos){
     Dataset ejemplo;
     ejemplo.data = datos.data.row(i);
     ejemplo.categoria.push_back(datos.categoria[i]);
-    arma::rowvec enemigo = enemigoMasCercano(ejemplo, datos);
-    arma::rowvec amigo = amigoMasCercano(ejemplo, datos);
+    int pos_enemigo = enemigoMasCercano(ejemplo, datos);
+    int pos_amigo = amigoMasCercano(ejemplo, datos);
 
-    for (size_t j = 0; j < datos.data.n_cols; ++j) {
-      pesos(j) += abs(datos.data(i,j) - enemigo(j)) - abs(datos.data(i, j) - amigo(j));
+    if (pos_enemigo != -1 && pos_amigo != -1){
+      arma::rowvec enemigo = datos.data.row(pos_enemigo);
+      arma::rowvec amigo = datos.data.row(pos_amigo);
+      for (size_t j = 0; j < datos.data.n_cols; ++j) {
+        pesos(j) += abs(datos.data(i,j) - enemigo(j)) - abs(datos.data(i, j) - amigo(j));
+      }
     }
   }
 
@@ -108,7 +130,7 @@ arma::rowvec busquedaLocal(const Dataset &datos){
   normal_distribution<double> distribucion_normal(0.0, SIGMA);
   uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
 
-  vector<int> indices;
+  vector<int> indices(datos.data.n_cols);
   arma::rowvec pesos(datos.data.n_cols);
 
   // La solución inicial se generará de forma aleatoria utilizando una distribución uniforme en [0, 1]
@@ -116,7 +138,7 @@ arma::rowvec busquedaLocal(const Dataset &datos){
     pesos(i) = Random::get(distribucion_uniforme);
 
   for (size_t i = 0; i < pesos.size(); ++i) 
-    indices.push_back(i);
+    indices[i] = i;
 
   Random::shuffle(indices);
 
@@ -128,15 +150,16 @@ arma::rowvec busquedaLocal(const Dataset &datos){
   size_t num_vecinos = 0;
   bool mejora = false;
   while ( num_iteraciones < MAX_ITER && num_vecinos < pesos.n_cols*CONST_MAX_VECINOS){
-    int componente = indices[num_iteraciones % pesos.n_cols];
+    //int componente = indices[num_iteraciones % pesos.n_cols];
+    int componente = indices[num_vecinos % pesos.n_cols];
 
     // Mutamos la solución actual
     arma::rowvec pesos_mutados = pesos;
     pesos_mutados(componente) += Random::get(distribucion_normal);
 
     // Truncamos el valor de la componente mutada
-    if (pesos_mutados(componente) < 0) pesos_mutados(componente) = 0;
-    if (pesos_mutados(componente) > 1) pesos_mutados(componente) = 1;
+    if (pesos_mutados(componente) < 0.0) pesos_mutados(componente) = 0.0;
+    if (pesos_mutados(componente) > 1.0) pesos_mutados(componente) = 1.0;
 
     // Calculamos el fitness de la solución mutada
     tasa_clasif = tasa_clas(datos, pesos_mutados);
@@ -168,6 +191,7 @@ arma::rowvec busquedaLocal(const Dataset &datos){
   return pesos;
 
 }
+
 
 /************************************************************
 ************************************************************
@@ -230,7 +254,7 @@ void printResultados(int algoritmo) {
     else if (algoritmo == 1)
       cout << "************************************ " << nombre_archivo << " (Greedy Relief) ************************************" << endl;
     else if (algoritmo == 2)
-      cout << "************************************ " << nombre_archivo << " (Búsqueda Local) ************************************" << endl;
+      cout << "************************************ " << nombre_archivo << " (Búsqueda Local) **********************************" << endl;
 
     cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
@@ -257,9 +281,9 @@ void printResultados(int algoritmo) {
         }
 
       // Juntamos los datasets de entrenamiento en un único dataset
-      Dataset entrenamiento = entrenam[0];
-      for(size_t j = 1; j < NUM_PARTICIONES-1; ++j) {
-        entrenamiento.data = arma::join_cols(entrenamiento.data, entrenam[j].data);
+      Dataset entrenamiento;
+      for(size_t j = 0; j < NUM_PARTICIONES-1; ++j) {
+        entrenamiento.data = arma::join_vert(entrenamiento.data, entrenam[j].data);
         entrenamiento.categoria.insert(entrenamiento.categoria.end(), entrenam[j].categoria.begin(), entrenam[j].categoria.end());
       }
 
@@ -300,7 +324,7 @@ void printResultados(int algoritmo) {
 
       // Calculo el tiempo que le ha tomado al algoritmo ejecutarse
       // y lo muestro en segundos usando notacion cientifica
-      double tiempo = (momentoFin - momentoInicio) / (double)CLOCKS_PER_SEC /* * 1000.0 */;
+      double tiempo = (momentoFin - momentoInicio) / (double)CLOCKS_PER_SEC;
 
       tasa_clas_acum += tasa_clasificacion;
       tasa_red_acum += tasa_reduccion;
@@ -310,20 +334,20 @@ void printResultados(int algoritmo) {
       // Muestro los resultados específicos de cada iteración por pantalla
       cout << fixed << setprecision(2);
       cout << ":::" << setw(6) << (i+1) << setw(8) << ":::" << setw(15) << tasa_clasificacion << setw(15) << ":::" << setw(13) << tasa_reduccion;
-      cout << setw(13) << ":::" << setw(7) << fit << setw(5) << "::: " << setw(9) << tiempo << setw(7) << ":::" << endl;
+      cout << setw(13) << ":::" << setw(7) << fit << setw(5) << "::: " << setw(9) << scientific << tiempo << fixed << setw(7) << ":::" << endl;
     }
 
     cout << ":::" << setw(8) << "MEDIA" << setw(6) << ":::" << setw(15) << (tasa_clas_acum/NUM_PARTICIONES) << setw(15) << ":::" << setw(13) << (tasa_red_acum/NUM_PARTICIONES);
-    cout << setw(13) << ":::" << setw(7) << (fit_acum/NUM_PARTICIONES) << setw(5) << "::: " << setw(9) << (tiempo_acum/NUM_PARTICIONES) << setw(7) << ":::" << endl;
+    cout << setw(13) << ":::" << setw(7) << (fit_acum/NUM_PARTICIONES) << setw(5) << "::: " << setw(9) << scientific << (tiempo_acum/NUM_PARTICIONES) << fixed << setw(7) << ":::" << endl;
     cout << "....................................................................................................." << endl << endl;
   
     // Mostrar los pesos de cada particion separados por comas
-    if (algoritmo == 1){
+    if (algoritmo == 2){
       cout << "Pesos obtenidos en cada partición:" << endl;
       for (size_t i = 0; i < total_pesos.size(); ++i) {
         cout << "Partición " << i+1 << ": ";
         for (size_t j = 0; j < total_pesos[i].size(); ++j) {
-          cout << total_pesos[i](j);
+          cout << scientific << total_pesos[i](j) << fixed;
           if (j != total_pesos[i].size()-1) {
             cout << ", ";
           }
@@ -353,48 +377,37 @@ double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::
     }
   }
 
-  return (static_cast<double>(aciertos) / test.data.n_rows)*100.0;
+  return static_cast<double>(aciertos) / test.data.n_rows * 100.0;
 }
 
 // Usando Leave-One-Out
 double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
-  size_t aciertos = 0;
+  double aciertos = 0;
 
   for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
-    Dataset test;
-    test.data = entrenamiento.data.row(i);
-    test.categoria.push_back(entrenamiento.categoria[i]);
-
-    Dataset entrenar;
-    entrenar.data = entrenamiento.data;
-    entrenar.categoria = entrenamiento.categoria;
-
-    entrenar.data.shed_row(i);
-    entrenar.categoria.erase(entrenar.categoria.begin() + i);
-
-    string categoria = clasificador1NN(test.data.row(0), entrenar, pesos);
-    if (categoria == test.categoria[0]) {
+    string categoria = clasificador1NN(i, entrenamiento, pesos);
+    if (categoria == entrenamiento.categoria[i]) {
       ++aciertos;
     }
   }
 
-  return (static_cast<double>(aciertos) / entrenamiento.data.n_rows)*100.0;
+  return aciertos / entrenamiento.data.n_rows * 100.0;
 }
 
 
 double tasa_red(const arma::rowvec &pesos){
-  size_t descartados = 0;
+  double descartados = 0;
 
   for (size_t i = 0; i < pesos.size(); ++i) {
-    if (pesos(i) < 0.1) {
+    if (pesos(i) <= 0.1) {
       ++descartados;
     }
   }
 
-  return (static_cast<double>(descartados) / pesos.size())*100.0;
+  return descartados / pesos.size()* 100.0;
 }
 
 
-double fitness(const double &tasa_clas, const double &tasa_red){
+double fitness(const double tasa_clas, const double tasa_red){
   return ALPHA*tasa_clas + (1-ALPHA)*tasa_red;
 }
