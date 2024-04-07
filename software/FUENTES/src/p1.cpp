@@ -6,46 +6,6 @@ using namespace std;
 
 /************************************************************
 ************************************************************
-CLASIFICADOR 1-NN
-************************************************************
-************************************************************/
-
-string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
-                            const arma::rowvec &pesos){
-  double minDist = numeric_limits<double>::max();
-  string categoria;
-
-  for (size_t i = 0; i < datos.data.n_rows; ++i) {
-    double dist = distanciaEuclidea(ejemplo, datos.data.row(i), pesos);
-    if (dist < minDist) {
-      minDist = dist;
-      categoria = datos.categoria[i];
-    }
-  }
-
-  return categoria;
-}
-
-string clasificador1NN(const int ejemplo, const Dataset &datos,
-                            const arma::rowvec &pesos){
-  double minDist = numeric_limits<double>::max();
-  string categoria;
-
-  for (size_t i = 0; i < datos.data.n_rows; ++i) {
-    if ((size_t)ejemplo != i){
-      double dist = distanciaEuclidea(datos.data.row(ejemplo), datos.data.row(i), pesos);
-      if (dist < minDist) {
-        minDist = dist;
-        categoria = datos.categoria[i];
-      }
-    }
-  }
-
-  return categoria;
-}
-
-/************************************************************
-************************************************************
 GREEDY RELIEF
 ************************************************************
 ************************************************************/
@@ -149,9 +109,8 @@ arma::rowvec busquedaLocal(const Dataset &datos){
   int num_iteraciones = 0;
   size_t num_vecinos = 0;
   bool mejora = false;
-  while ( num_iteraciones < MAX_ITER && num_vecinos < pesos.n_cols*CONST_MAX_VECINOS){
-    //int componente = indices[num_iteraciones % pesos.n_cols];
-    int componente = indices[num_vecinos % pesos.n_cols];
+  while ( num_iteraciones < MAX_ITER && num_vecinos < (pesos.n_cols+1)*CONST_MAX_VECINOS){
+    int componente = indices[num_iteraciones % pesos.n_cols];
 
     // Mutamos la solución actual
     arma::rowvec pesos_mutados = pesos;
@@ -342,7 +301,7 @@ void printResultados(int algoritmo) {
     cout << "....................................................................................................." << endl << endl;
   
     // Mostrar los pesos de cada particion separados por comas
-    if (algoritmo == 2){
+    /* if (algoritmo == 2){
       cout << "Pesos obtenidos en cada partición:" << endl;
       for (size_t i = 0; i < total_pesos.size(); ++i) {
         cout << "Partición " << i+1 << ": ";
@@ -354,60 +313,10 @@ void printResultados(int algoritmo) {
         }
         cout << endl;
       }
-    }
+    } */
 
     total_pesos.clear();
   }
 
 }
 
-/************************************************************
-************************************************************
-FUNCIONES DE EVALUACIÓN
-************************************************************
-************************************************************/
-
-double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::rowvec &pesos){
-  size_t aciertos = 0;
-
-  for (size_t i = 0; i < test.data.n_rows; ++i) {
-    string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
-    if (categoria == test.categoria[i]) {
-      ++aciertos;
-    }
-  }
-
-  return static_cast<double>(aciertos) / test.data.n_rows * 100.0;
-}
-
-// Usando Leave-One-Out
-double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
-  double aciertos = 0;
-
-  for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
-    string categoria = clasificador1NN(i, entrenamiento, pesos);
-    if (categoria == entrenamiento.categoria[i]) {
-      ++aciertos;
-    }
-  }
-
-  return aciertos / entrenamiento.data.n_rows * 100.0;
-}
-
-
-double tasa_red(const arma::rowvec &pesos){
-  double descartados = 0;
-
-  for (size_t i = 0; i < pesos.size(); ++i) {
-    if (pesos(i) <= 0.1) {
-      ++descartados;
-    }
-  }
-
-  return descartados / pesos.size()* 100.0;
-}
-
-
-double fitness(const double tasa_clas, const double tasa_red){
-  return ALPHA*tasa_clas + (1-ALPHA)*tasa_red;
-}

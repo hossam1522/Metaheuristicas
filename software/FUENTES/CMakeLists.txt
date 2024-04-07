@@ -15,7 +15,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB_RECURSE SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/*)
 
 # Directorio de ejecutables
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../BIN)
 
 # Flags del compilador
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -larmadillo -Ofast")

@@ -102,4 +102,84 @@ double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y);
  */
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos);
 
+/************************************************************
+************************************************************
+CLASIFICADOR 1-NN
+************************************************************
+************************************************************/
+
+/**
+ * @brief 
+ * Función para clasificar un ejemplo con el clasificador 1-NN
+ * 
+ * @param ejemplo Ejemplo a clasificar
+ * @param datos Conjunto de datos de entrenamiento
+ * @param pesos Pesos para las características
+ * @return std::string  Categoría a la que pertenece el ejemplo
+ */
+std::string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos);
+
+/**
+ * @brief
+ * Función para clasificar un ejemplo con el clasificador 1-NN usando la técnica de Leave-One-Out
+ * 
+ * @param ejemplo Ejemplo a clasificar
+ * @param datos Conjunto de datos de entrenamiento
+ * @param pesos Pesos para las características
+ * @return std::string Categoría a la que pertenece el ejemplo
+ */
+std::string clasificador1NN(const int ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos);
+
+
+/************************************************************
+************************************************************
+FUNCIONES DE EVALUACIÓN
+************************************************************
+************************************************************/
+
+/**
+ * @brief 
+ * Función para calcular la tasa de clasificación de un conjunto de datos
+ * 
+ * @param test Conjunto de datos de test
+ * @param entrenamiento Conjunto de datos de entrenamiento
+ * @param pesos Pesos para las características
+ * @return double Tasa de clasificación
+ */
+double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::rowvec &pesos);
+
+/**
+ * @brief 
+ * Función para calcular la tasa de clasificación de un conjunto de datos
+ * usando la técnica de Leave-One-Out
+ * 
+ * @param entrenamiento Conjunto de datos de entrenamiento
+ * @param pesos Pesos para las características
+ * @return double Tasa de clasificación
+ */
+double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos);
+
+
+/**
+ * @brief 
+ * Función para calcular la tasa de reducción de un conjunto de datos
+ * 
+ * @param pesos Pesos para las características
+ * @return double Tasa de reducción
+ */
+double tasa_red(const arma::rowvec &pesos);
+
+/**
+ * @brief 
+ * Función para calcular la función objetivo
+ * 
+ * @param tasa_clas Tasa de clasificación
+ * @param tasa_red Tasa de reducción
+ * @return double Valor de la función objetivo
+ */
+double fitness(const double tasa_clas, const double tasa_red);
+
+
 #endif

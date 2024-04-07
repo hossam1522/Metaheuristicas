@@ -99,8 +99,6 @@ FUNCIONES PARA CALCUAR DISTANCIAS
 
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y) {
   return sqrt(arma::accu(arma::pow(x - y, 2)));
-  /* arma::rowvec pesos = arma::ones<arma::rowvec>(x.n_cols);
-  return distanciaEuclidea(x, y, pesos); */
 }
 
 double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y, const arma::rowvec &pesos) {
@@ -116,14 +114,95 @@ double distanciaEuclidea(const arma::rowvec &x, const arma::rowvec &y, const arm
   arma::rowvec pesosFiltrados = pesos;
   pesosFiltrados.for_each([](double &valor) { valor = valor > 0.1 ? valor : 0; });
   return sqrt(arma::accu(arma::pow(x - y, 2) % pesosFiltrados));
-  //return sqrt(arma::accu(arma::pow(x - y, 2) % pesos));
-  /* double val = 0;
+}
 
-  for (size_t i=0; i<x.n_cols; ++i) {
-      if (pesos[i] >= 0) {
-          val += pesos[i] * pow(x(i) - y(i), 2);
-      }
+/************************************************************
+************************************************************
+CLASIFICADOR 1-NN
+************************************************************
+************************************************************/
+
+string clasificador1NN(const arma::rowvec &ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos){
+  double minDist = numeric_limits<double>::max();
+  string categoria;
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    double dist = distanciaEuclidea(ejemplo, datos.data.row(i), pesos);
+    if (dist < minDist) {
+      minDist = dist;
+      categoria = datos.categoria[i];
+    }
   }
 
-  return sqrt(val); */
+  return categoria;
+}
+
+string clasificador1NN(const int ejemplo, const Dataset &datos,
+                            const arma::rowvec &pesos){
+  double minDist = numeric_limits<double>::max();
+  string categoria;
+
+  for (size_t i = 0; i < datos.data.n_rows; ++i) {
+    if ((size_t)ejemplo != i){
+      double dist = distanciaEuclidea(datos.data.row(ejemplo), datos.data.row(i), pesos);
+      if (dist < minDist) {
+        minDist = dist;
+        categoria = datos.categoria[i];
+      }
+    }
+  }
+
+  return categoria;
+}
+
+/************************************************************
+************************************************************
+FUNCIONES DE EVALUACIÓN
+************************************************************
+************************************************************/
+
+double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::rowvec &pesos){
+  size_t aciertos = 0;
+
+  for (size_t i = 0; i < test.data.n_rows; ++i) {
+    string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
+    if (categoria == test.categoria[i]) {
+      ++aciertos;
+    }
+  }
+
+  return static_cast<double>(aciertos) / test.data.n_rows * 100.0;
+}
+
+// Usando Leave-One-Out
+double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
+  double aciertos = 0;
+
+  for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
+    string categoria = clasificador1NN(i, entrenamiento, pesos);
+    if (categoria == entrenamiento.categoria[i]) {
+      ++aciertos;
+    }
+  }
+
+  return aciertos / entrenamiento.data.n_rows * 100.0;
+}
+
+
+double tasa_red(const arma::rowvec &pesos){
+  double descartados = 0;
+
+  for (size_t i = 0; i < pesos.size(); ++i) {
+    if (pesos(i) <= 0.1) {
+      ++descartados;
+    }
+  }
+
+  return descartados / pesos.size()* 100.0;
+}
+
+
+double fitness(const double tasa_clas, const double tasa_red){
+  return ALPHA*tasa_clas + (1-ALPHA)*tasa_red;
 }

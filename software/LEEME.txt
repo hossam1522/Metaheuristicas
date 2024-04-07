@@ -1,0 +1,19 @@
+Los principales archivos que se han implementado son los siguientes:
+
+- main.cpp: Archivo principal que contiene la función main y que se encarga de mostrar los
+resultados.
+- p1.cpp/p1.h: Archivo que contiene la implementación de los algoritmos y también la función
+para mostrar los resultados.
+- util.cpp/util.h: Archivo que contiene las funciones para leer y normalizar los datos, además
+de las funciones comunes a ambos algoritmos, como la distancia euclídea, el clasificador 1-NN
+y las funciones para calcular la tasa de clasificación, la tasa de reducción y el fitness.
+- random.hpp: Archivo proporcionado por el profesor que se ha usado para la generación de
+nímeros aleatorios
+
+Para compilar el proyecto y ejecutar el proyecto, hay que seguir los siguientes pasos:
+1. Situarse en el directorio software/FUENTES.
+2. Ejecutar el comando "cmake ." para generar los archivos de compilación.
+3. Ejecutar el comando make para compilar el proyecto.
+4. Situarse en el directorio software/BIN.
+5. Ejecutar el programa proporcionando como único argumento una semilla para la generación
+de números aleatorios. Por ejemplo, ./P1_MH 97435
