@@ -28,6 +28,9 @@ const double ALPHA_BLX = 0.3;
 // Probabilidad de cruce en el AGG
 const double PROB_CRUCE_AGG = 0.68;
 
+// Probabilidad de cruce en el AGE
+const double PROB_CRUCE_AGE = 1.0;
+
 // Probabilidad de mutación tanto en el AGG como en el AM por individuo
 const double PROB_MUTACION = 0.08;
 
@@ -40,11 +43,17 @@ const int NUM_INDIVIDUOS_AGE = 2;
 // Número de individuos en la población para el AM
 const int NUM_INDIVIDUOS_AM = 50;
 
+// Probabilidad de cruce en el AM
+const double PROB_CRUCE_AM = 0.7;
+
+// Probabilidad de mutación por cromosoma en el AM
+const double PROB_MUTACION_AM = 0.7;
+
 // Frecuencia de aplicacion de la búsqueda local en el AM
 const int FREQ_BUSQUEDA_LOCAL = 10;
 
-// Probabilidad de la búsqueda local en el AM
-const double PROB_BUSQUEDA_LOCAL = 0.1;
+// Probabilidad de selección de un subconjunto de cromosomas para la búsqueda local en el AM
+const double PROB_LS = 0.1;
 
 /************************************************************
 ************************************************************
@@ -64,7 +73,8 @@ struct Cromosoma {
 
 /**
  * @brief 
- * Estructura para comparar dos cromosomas y que se ordenen los sets
+ * Estructura para comparar dos cromosomas y que se ordenen los sets de mayor
+ * a menor fitness
  * 
  */
 struct CompareCromosoma {
@@ -75,10 +85,17 @@ struct CompareCromosoma {
 
 /**
  * @brief 
+ * Vector que almacena la población de cromosomas
+ * 
+ */
+typedef std::vector<Cromosoma> Poblacion;
+
+/**
+ * @brief 
  * Multiset para almacenar los cromosomas y que se ordenen por fitness
  * 
  */
-typedef std::multiset<Cromosoma, CompareCromosoma> Poblacion;
+typedef std::multiset<Cromosoma, CompareCromosoma> Poblacion_ordenada;
 
 /************************************************************
 ************************************************************
@@ -95,6 +112,15 @@ FUNCIONES AUXILIARES
  */
 Poblacion poblacion_inicial(const Dataset &datos);
 
+/**
+ * @brief
+ * Función para ordenar la población de cromosomas por fitnes
+ * 
+ * @param poblacion Población de cromosomas
+ * @return Poblacion_ordenada Población ordenada
+ */
+Poblacion_ordenada ordenar_poblacion(const Poblacion &poblacion);
+
 /************************************************************
 ************************************************************
 ALGORITMO GÉNETICO GENERACIONAL (AGG)
@@ -103,36 +129,49 @@ ALGORITMO GÉNETICO GENERACIONAL (AGG)
 
 /**
  * @brief 
+ * Función que elige tres individuos aleatorios de la población y develve el mejor
+ * de ellos (es decir, usando torneo)
+ * 
+ * @param poblacion Población de cromosomas
+ * @return Cromosoma Mejor cromosoma
+ */
+Cromosoma seleccion(const Poblacion &poblacion);
+
+/**
+ * @brief 
  * Función para calcular el cruce BLX entre dos cromosomas
  * 
+ * @param datos Conjunto de datos de entrenamiento
  * @param padre1 Cromosoma 1
  * @param padre2 Cromosoma 2
  * @param hijo1 Cromosoma hijo 1
  * @param hijo2 Cromosoma hijo 2
  * @return void
  */
-void cruceBLX(const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2);
+void cruceBLX(const Dataset &datos, const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2);
 
 /**
  * @brief 
  * Función para calcular el cruce aritmético entre dos cromosomas
  * 
+ * @param datos Conjunto de datos de entrenamiento
  * @param padre1 Cromosoma 1
  * @param padre2 Cromosoma 2
  * @param hijo1 Cromosoma hijo 1
  * @param hijo2 Cromosoma hijo 2
  * @return void
  */
-void cruceAritmetico(const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2);
+void cruceAritmetico(const Dataset &datos, const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2);
 
 /**
  * @brief 
  * Operador de mutación para un cromosoma
  * 
  * @param cromosoma Cromosoma a mutar
+ * @param gen Gen a mutar
  * @return void
  */
-void mutacion(Cromosoma &cromosoma);
+void mutacion(Cromosoma &cromosoma, const int gen);
 
 /**
  * @brief 
@@ -147,7 +186,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce);
 
 /************************************************************
 ************************************************************
-Algortimo GENÉTICO ESTACIONARIO (AGE)
+ALGORITMO GENÉTICO ESTACIONARIO (AGE)
 ************************************************************
 ************************************************************/
 
@@ -170,6 +209,28 @@ ALGORTIMOS MEMÉTICOS (AMs)
 
 /**
  * @brief 
+ * Función para aplicar la búsqueda local de baja intensidad
+ * 
+ * @param datos Conjunto de datos de entrenamiento
+ * @param cromosoma Cromosoma a aplicar la búsqueda local
+ * @param iteraciones Número de iteraciones que se han realizado
+ * @return Cromosoma Cromosoma con la búsqueda local aplicada
+ */
+Cromosoma BL_BI(const Dataset &datos, const Cromosoma &cromosoma, int &iteraciones);
+
+/**
+ * @brief
+ * Función para aplicar el algoritmo memético según
+ * el tipo que se le pase como parámetro
+ * 
+ * @param datos Conjunto de datos de entrenamiento 
+ * @param tipoAlg Tipo de algoritmo memético a aplicar (0 para AM_All, 1 para AM_Rand y 2 para AM_Best)
+ * @return arma::rowvec Pesos de las características
+ */
+arma::rowvec AM (const Dataset &datos, int tipoAlg);
+
+/**
+ * @brief 
  * Función para aplicar el algoritmo memético donde
  * cada 10 generaciones, se aplica la BL sobre todos los cromosomas de la población
  * 
@@ -177,7 +238,7 @@ ALGORTIMOS MEMÉTICOS (AMs)
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_All (const Dataset &datos);
+arma::rowvec AM_All (const Dataset &datos){return AM(datos, 0);}
 
 /**
  * @brief 
@@ -190,7 +251,7 @@ arma::rowvec AM_All (const Dataset &datos);
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_Rand (const Dataset &datos);
+arma::rowvec AM_Rand (const Dataset &datos){return AM(datos, 1);}
 
 /**
  * @brief 
@@ -202,7 +263,7 @@ arma::rowvec AM_Rand (const Dataset &datos);
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_Best (const Dataset &datos);
+arma::rowvec AM_Best (const Dataset &datos){return AM(datos, 2);}
 
 /************************************************************
 ************************************************************
