@@ -85,20 +85,5 @@ BUSQUEDA LOCAL
  */
 arma::rowvec busquedaLocal(const Dataset &datos);
 
-/************************************************************
-************************************************************
-FUNCIONES PARA MOSTRAR RESULTADOS
-************************************************************
-************************************************************/
-
-/**
- * @brief 
- * Función para mostrar los resultados de la tasa de clasificación y reducción
- * sin ponderaciones, con Greedy Relief y con Búsqueda Local
- * 
- * @param algoritmo Algoritmo a mostrar, 0 para sin ponderaciones, 
- *                  1 para Greedy Relief y 2 para Búsqueda Local
- */
-void printResultados(int algoritmo);
 
 #endif

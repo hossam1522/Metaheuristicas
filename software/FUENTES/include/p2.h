@@ -69,6 +69,10 @@ ESTRUCTURAS DE DATOS
 struct Cromosoma {
     arma::rowvec caracteristicas;
     double fitness;
+
+    bool operator == (const Cromosoma &c) const {
+        return arma::approx_equal(caracteristicas, c.caracteristicas, "absdiff", 1e-5);
+    }
 };
 
 /**
@@ -238,7 +242,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg);
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_All (const Dataset &datos){return AM(datos, 0);}
+arma::rowvec AM_All (const Dataset &datos);
 
 /**
  * @brief 
@@ -251,7 +255,7 @@ arma::rowvec AM_All (const Dataset &datos){return AM(datos, 0);}
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_Rand (const Dataset &datos){return AM(datos, 1);}
+arma::rowvec AM_Rand (const Dataset &datos);
 
 /**
  * @brief 
@@ -263,7 +267,7 @@ arma::rowvec AM_Rand (const Dataset &datos){return AM(datos, 1);}
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AM_Best (const Dataset &datos){return AM(datos, 2);}
+arma::rowvec AM_Best (const Dataset &datos);
 
 /************************************************************
 ************************************************************
@@ -274,11 +278,16 @@ FUNCIONES PARA MOSTRAR RESULTADOS
 /**
  * @brief 
  * Función para mostrar los resultados de la tasa de clasificación y reducción
- * sin ponderaciones, con Greedy Relief y con Búsqueda Local
+ * sin ponderaciones, con Greedy Relief, con Búsqueda Local, AGG-BLX, AGG-CA,
+ * AGE-BLX, AGE-CA, AM-(10,1.0), AM-(10,0.1) y AM-(10,0.1mej)
  * 
  * @param algoritmo Algoritmo a mostrar, 0 para sin ponderaciones, 
- *                  1 para Greedy Relief y 2 para Búsqueda Local
+ *                  1 para Greedy Relief, 2 para Búsqueda Local,
+ *                  3 para AGG-BLX, 4 para AGG-CA, 5 para AGE-BLX,
+ *                  6 para AGE-CA, 7 para AM-(10,1.0), 8 para AM-(10,0.1)
+ *                  y 9 para AM-(10,0.1mej)
  */
 void printResultados(int algoritmo);
+
 
 #endif

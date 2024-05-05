@@ -13,8 +13,9 @@ Poblacion poblacion_inicial(const Dataset &datos) {
   uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
 
   Poblacion poblacion;
-  for (int i = 0; i < NUM_INDIVIDUOS_AGG; ++i) {
+  for (size_t i = 0; i < NUM_INDIVIDUOS_AGG; ++i) {
     Cromosoma cromosoma;
+    cromosoma.caracteristicas.set_size(datos.data.n_cols);
     for (int j = 0; j < datos.data.n_cols; ++j) {
       cromosoma.caracteristicas.insert_cols(j, Random::get(distribucion_uniforme));
     }
@@ -23,6 +24,7 @@ Poblacion poblacion_inicial(const Dataset &datos) {
     cromosoma.fitness = fitness(tasa_clasif, tasa_reducc);
     poblacion.push_back(cromosoma);
   }
+
   return poblacion;
 }
 
@@ -46,7 +48,7 @@ Cromosoma seleccion(const Poblacion &poblacion) {
   mejor.fitness = -1;
 
   vector<int> indices;
-  for (int i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < 3; ++i) {
     int idx = Random::get(distribucion_uniforme);
     while (find(indices.begin(), indices.end(), idx) != indices.end()) {
       idx = Random::get(distribucion_uniforme);
@@ -63,7 +65,10 @@ Cromosoma seleccion(const Poblacion &poblacion) {
 
 void cruceBLX(const Dataset &datos,const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2) {
   
-  for (int i = 0; i < padre1.caracteristicas.n_cols; ++i) {
+  hijo1.caracteristicas.set_size(padre1.caracteristicas.n_cols);
+  hijo2.caracteristicas.set_size(padre1.caracteristicas.n_cols);
+
+  for (size_t i = 0; i < padre1.caracteristicas.n_cols; ++i) {
     double cmin = min(padre1.caracteristicas(i), padre2.caracteristicas(i));
     double cmax = max(padre1.caracteristicas(i), padre2.caracteristicas(i));
     double I = cmax - cmin;
@@ -101,7 +106,10 @@ void cruceBLX(const Dataset &datos,const Cromosoma &padre1, const Cromosoma &pad
 void cruceAritmetico(const Dataset &datos, const Cromosoma &padre1, const Cromosoma &padre2, Cromosoma &hijo1, Cromosoma &hijo2) {
   uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
 
-  for (int i = 0; i < padre1.caracteristicas.n_cols; ++i) {
+  hijo1.caracteristicas.set_size(padre1.caracteristicas.n_cols);
+  hijo2.caracteristicas.set_size(padre1.caracteristicas.n_cols);
+
+  for (size_t i = 0; i < padre1.caracteristicas.n_cols; ++i) {
     double alpha = Random::get(distribucion_uniforme);
     hijo1.caracteristicas(i) = alpha * padre1.caracteristicas(i) + (1 - alpha) * padre2.caracteristicas(i);
     hijo2.caracteristicas(i) = alpha * padre2.caracteristicas(i) + (1 - alpha) * padre1.caracteristicas(i);
@@ -139,7 +147,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
     Poblacion poblacion_intermedia(NUM_INDIVIDUOS_AGG);
 
     // Generamos la población intermedia
-    for (int i = 0; i < poblacion_intermedia.size(); ++i) {
+    for (size_t i = 0; i < poblacion_intermedia.size(); ++i) {
       poblacion_intermedia[i] = seleccion(poblacion);
     }
 
@@ -167,7 +175,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
     }
   
     // Ordenamos la población original y la de hijos
-    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion_intermedia);
+    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
     Poblacion_ordenada hijos = ordenar_poblacion(poblacion_intermedia);
     Cromosoma mejor_solucion_original = *poblacion_original.begin();
 
@@ -213,7 +221,7 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
     Poblacion poblacion_intermedia(NUM_INDIVIDUOS_AGE);
 
     // Generamos la población intermedia
-    for (int i = 0; i < poblacion_intermedia.size(); ++i) {
+    for (size_t i = 0; i < poblacion_intermedia.size(); ++i) {
       poblacion_intermedia[i] = seleccion(poblacion);
     }
 
@@ -241,7 +249,7 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
     }
   
     // Ordenamos la población original y cogemos a los 2 peores individuos
-    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion_intermedia);
+    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
     Cromosoma peor_solucion_original = *prev(poblacion_original.end());
     Cromosoma peor_solucion_original2 = *prev(prev(poblacion_original.end()));
     
@@ -353,7 +361,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       Poblacion poblacion_intermedia(NUM_INDIVIDUOS_AM);
 
       // Generamos la población intermedia
-      for (int i = 0; i < poblacion_intermedia.size(); ++i) {
+      for (size_t i = 0; i < poblacion_intermedia.size(); ++i) {
         poblacion_intermedia[i] = seleccion(poblacion);
       }
 
@@ -384,7 +392,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       }
     
       // Orden
-      Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion_intermedia);
+      Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
       Cromosoma mejor_solucion_original = *poblacion_original.begin();
 
       // Si la mejor solucion original no se encuentra en la poblacion de hijos
@@ -411,7 +419,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
     if (num_iter < MAX_ITER) {
       
       if (tipoAlg == 0) {
-        for (int i = 0; i < poblacion.size(); ++i) {
+        for (size_t i = 0; i < poblacion.size(); ++i) {
           Cromosoma cromosoma = BL_BI(datos, poblacion[i], num_iter);
           poblacion[i] = cromosoma;
         }
@@ -425,7 +433,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
           uniform_int_distribution<int> distribucion_uniforme(0, poblacion.size()-1);
           vector<int> indices;
 
-          for (int i = 0; i < num_cromosomas_bl; ++i) {
+          for (size_t i = 0; i < num_cromosomas_bl; ++i) {
             int idx = Random::get(distribucion_uniforme);
             while (find(indices.begin(), indices.end(), idx) != indices.end()) {
               idx = Random::get(distribucion_uniforme);
@@ -441,7 +449,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
 
         else if (tipoAlg == 2) {
           Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
-          for (int i = 0; i < num_cromosomas_bl; ++i) {
+          for (size_t i = 0; i < num_cromosomas_bl; ++i) {
             Cromosoma cromosoma = BL_BI(datos, *poblacion_ordenada.begin(), num_iter);
             // Buscar indice del cromosoma en la poblacion
             auto it = find(poblacion.begin(), poblacion.end(), *poblacion_ordenada.begin());
@@ -461,3 +469,256 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
   Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
   return poblacion_ordenada.begin()->caracteristicas;
 }
+
+arma::rowvec AM_All(const Dataset &datos){
+  return AM(datos, 0);
+}
+
+arma::rowvec AM_Rand(const Dataset &datos){
+  return AM(datos, 1);
+}
+
+arma::rowvec AM_Best(const Dataset &datos){
+  return AM(datos, 2);
+}
+
+/************************************************************
+************************************************************
+FUNCIONES PARA MOSTRAR RESULTADOS
+************************************************************
+************************************************************/
+
+void printResultados(int algoritmo) {
+
+  string nombre_archivo;
+  vector<arma::rowvec> total_pesos;
+
+  cout << "******************************************************************************" << endl;
+  cout << "******************************************************************************" << endl;
+  if (algoritmo == 0)
+    cout << "*********************** 1-NN sin ponderaciones *******************************" << endl;
+  else if (algoritmo == 1)
+    cout << "*********************** Greedy Relief (1-NN) *********************************" << endl;
+  else if (algoritmo == 2)
+    cout << "*********************** Búsqueda Local (1-NN) ********************************" << endl;
+  else if (algoritmo == 3)
+    cout << "*********************** AGG-BLX (1-NN) ***************************************" << endl;
+  else if (algoritmo == 4)
+    cout << "*********************** AGG-CA (1-NN) ****************************************" << endl;
+  else if (algoritmo == 5)
+    cout << "*********************** AGE-BLX (1-NN) ***************************************" << endl;
+  else if (algoritmo == 6)
+    cout << "*********************** AGE-CA (1-NN) ****************************************" << endl;
+  else if (algoritmo == 7)
+    cout << "*********************** AM-(10,1.0) (1-NN) **********************************" << endl;
+  else if (algoritmo == 8)
+    cout << "*********************** AM-(10,0.1) (1-NN) **********************************" << endl;
+  else if (algoritmo == 9)
+    cout << "*********************** AM-(10,0.1mej) (1-NN) *******************************" << endl;
+  cout << "******************************************************************************" << endl;
+  cout << "******************************************************************************" << endl;
+
+
+  for(int l = 0; l < NUM_DATASETS; ++l) {
+
+    switch(l) {
+      case 0:
+        nombre_archivo = "ecoli";
+      break;
+
+      case 1:
+        nombre_archivo = "parkinsons";
+      break;
+
+      case 2:
+        nombre_archivo = "breast-cancer";
+      break;
+    }
+
+
+    Dataset dataset1 = leerDatos("../BIN/Instancias_APC/" + nombre_archivo + "_1.arff");
+    Dataset dataset2 = leerDatos("../BIN/Instancias_APC/" + nombre_archivo + "_2.arff");
+    Dataset dataset3 = leerDatos("../BIN/Instancias_APC/" + nombre_archivo + "_3.arff");
+    Dataset dataset4 = leerDatos("../BIN/Instancias_APC/" + nombre_archivo + "_4.arff");
+    Dataset dataset5 = leerDatos("../BIN/Instancias_APC/" + nombre_archivo + "_5.arff");
+
+    vector<Dataset> dataset;
+    dataset.push_back(dataset1);
+    dataset.push_back(dataset2);
+    dataset.push_back(dataset3);
+    dataset.push_back(dataset4);
+    dataset.push_back(dataset5);
+
+    // Normalizar los datos
+    normalizarDatos(dataset);
+
+    cout << endl << endl;
+    if (algoritmo == 0)
+      cout << "************************************ " << nombre_archivo << " (1-NN) ************************************" << endl;
+    else if (algoritmo == 1)
+      cout << "************************************ " << nombre_archivo << " (Greedy Relief) ************************************" << endl;
+    else if (algoritmo == 2)
+      cout << "************************************ " << nombre_archivo << " (Búsqueda Local) **********************************" << endl;
+    else if (algoritmo == 3)
+      cout << "************************************ " << nombre_archivo << " (AGG-BLX) ************************************" << endl;
+    else if (algoritmo == 4)
+      cout << "************************************ " << nombre_archivo << " (AGG-CA) *************************************" << endl;
+    else if (algoritmo == 5)
+      cout << "************************************ " << nombre_archivo << " (AGE-BLX) ************************************" << endl;
+    else if (algoritmo == 6)
+      cout << "************************************ " << nombre_archivo << " (AGE-CA) *************************************" << endl;
+    else if (algoritmo == 7)
+      cout << "************************************ " << nombre_archivo << " (AM-(10,1.0)) ********************************" << endl;
+    else if (algoritmo == 8)
+      cout << "************************************ " << nombre_archivo << " (AM-(10,0.1)) ********************************" << endl;
+    else if (algoritmo == 9)
+      cout << "************************************ " << nombre_archivo << " (AM-(10,0.1mej)) *****************************" << endl;
+
+    cout << endl << "....................................................................................................." << endl;
+    cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
+    cout << "....................................................................................................." << endl;
+
+
+    // Declaración de los resultados que vamos a acumular para mostrar finalmente un resultado medio
+    double tasa_clas_acum = 0.0;
+    double tasa_red_acum = 0.0;
+    double fit_acum = 0.0;
+    double tiempo_acum = 0.0;
+
+    // Ejecución del algoritmo 1-NN en las diferentes particiones
+    for(size_t i = 0; i < NUM_PARTICIONES; ++i) {
+      // Elegimos en la iteración i como test al archivo l
+      Dataset test = dataset[i];
+
+      // El resto de archivos serán para entrenamiento
+      vector<Dataset> entrenam;
+      for(size_t j = 0; j < NUM_PARTICIONES; ++j)
+        if (j != i) {
+          Dataset ejemplos_entrenamiento = dataset[j];
+          entrenam.push_back(ejemplos_entrenamiento);
+        }
+
+      // Juntamos los datasets de entrenamiento en un único dataset
+      Dataset entrenamiento;
+      for(size_t j = 0; j < NUM_PARTICIONES-1; ++j) {
+        entrenamiento.data = arma::join_vert(entrenamiento.data, entrenam[j].data);
+        entrenamiento.categoria.insert(entrenamiento.categoria.end(), entrenam[j].categoria.begin(), entrenam[j].categoria.end());
+      }
+
+      arma::rowvec w(test.data.n_cols);
+      
+      tiempo_punto momentoInicio, momentoFin;
+
+      if (algoritmo == 0){
+        // Vector de pesos para el algoritmo 1-NN
+        for(size_t j = 0; j < w.size(); ++j)
+          w[j] = 1.0;
+      }
+      else if (algoritmo == 1){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo Greedy Relief
+        w = greedy(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 2){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo Búsqueda Local
+        w = busquedaLocal(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 3){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AGG-BLX
+        w = AGG(entrenamiento, 0);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 4){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AGG-CA
+        w = AGG(entrenamiento, 1);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 5){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AGE-BLX
+        w = AGE(entrenamiento, 0);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 6){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AGE-CA
+        w = AGE(entrenamiento, 1);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 7){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AM-(10,1.0)
+        w = AM_All(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 8){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AM-(10,0.1)
+        w = AM_Rand(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 9){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo AM-(10,0.1mej)
+        w = AM_Best(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+
+      total_pesos.push_back(w);
+
+      if (algoritmo==0)
+        momentoInicio = chrono::high_resolution_clock::now();
+
+      // Calculo los valores de las tasas y del fitness, donde se ejecuta el algoritmo 1-NN, y los sumo a las variables acumuladas
+      double tasa_clasificacion = tasa_clas(test, entrenamiento, w);
+      double tasa_reduccion = tasa_red(w);
+      double fit = fitness(tasa_clasificacion, tasa_reduccion);
+
+      if (algoritmo==0)
+        momentoFin = chrono::high_resolution_clock::now();
+
+      // Calculo el tiempo que le ha tomado al algoritmo ejecutarse
+      // y lo muestro en segundos usando notacion cientifica
+      chrono::duration<double> tiempo_transcurrido = momentoFin - momentoInicio;
+      double tiempo = tiempo_transcurrido.count();
+
+      tasa_clas_acum += tasa_clasificacion;
+      tasa_red_acum += tasa_reduccion;
+      fit_acum += fit;
+      tiempo_acum += tiempo;
+
+      // Muestro los resultados específicos de cada iteración por pantalla
+      cout << fixed << setprecision(2);
+      cout << ":::" << setw(6) << (i+1) << setw(8) << ":::" << setw(15) << tasa_clasificacion << setw(15) << ":::" << setw(13) << tasa_reduccion;
+      cout << setw(13) << ":::" << setw(7) << fit << setw(5) << "::: " << setw(9) << scientific << tiempo << fixed << setw(7) << ":::" << endl;
+    }
+
+    cout << ":::" << setw(8) << "MEDIA" << setw(6) << ":::" << setw(15) << (tasa_clas_acum/NUM_PARTICIONES) << setw(15) << ":::" << setw(13) << (tasa_red_acum/NUM_PARTICIONES);
+    cout << setw(13) << ":::" << setw(7) << (fit_acum/NUM_PARTICIONES) << setw(5) << "::: " << setw(9) << scientific << (tiempo_acum/NUM_PARTICIONES) << fixed << setw(7) << ":::" << endl;
+    cout << "....................................................................................................." << endl << endl;
+  
+    // Mostrar los pesos de cada particion separados por comas
+    if (algoritmo == 2){
+      cout << "Pesos obtenidos en cada partición:" << endl;
+      for (size_t i = 0; i < total_pesos.size(); ++i) {
+        cout << "Partición " << i+1 << ": ";
+        for (size_t j = 0; j < total_pesos[i].size(); ++j) {
+          cout << scientific << total_pesos[i](j) << fixed;
+          if (j != total_pesos[i].size()-1) {
+            cout << ", ";
+          }
+        }
+        cout << endl;
+      }
+    }
+
+    total_pesos.clear();
+  }
+
+}
+

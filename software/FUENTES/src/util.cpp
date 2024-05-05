@@ -7,9 +7,13 @@
  * 
  */
 
+#define OPENMP_VARIABLE
 #include "util.h"
 
 using namespace std;
+
+// Variable global para activar/desactivar OpenMP
+bool openmp = true;
 
 /************************************************************
 ************************************************************
@@ -179,10 +183,21 @@ double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::
 double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
   double aciertos = 0;
 
-  for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
-    string categoria = clasificador1NN(i, entrenamiento, pesos);
-    if (categoria == entrenamiento.categoria[i]) {
-      ++aciertos;
+  if (openmp){
+    #pragma omp parallel for reduction(+:aciertos)
+    for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
+      string categoria = clasificador1NN(i, entrenamiento, pesos);
+      if (categoria == entrenamiento.categoria[i]) {
+        ++aciertos;
+      }
+    }
+  }
+  else{
+    for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
+      string categoria = clasificador1NN(i, entrenamiento, pesos);
+      if (categoria == entrenamiento.categoria[i]) {
+        ++aciertos;
+      }
     }
   }
 
@@ -193,9 +208,19 @@ double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
 double tasa_red(const arma::rowvec &pesos){
   double descartados = 0;
 
-  for (size_t i = 0; i < pesos.size(); ++i) {
-    if (pesos(i) <= 0.1) {
-      ++descartados;
+  if (openmp){
+    #pragma omp parallel for reduction(+:descartados)
+    for (size_t i = 0; i < pesos.size(); ++i) {
+      if (pesos(i) <= 0.1) {
+        ++descartados;
+      }
+    }
+  }
+  else{
+    for (size_t i = 0; i < pesos.size(); ++i) {
+      if (pesos(i) <= 0.1) {
+        ++descartados;
+      }
     }
   }
 

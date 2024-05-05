@@ -6,6 +6,13 @@
  * Archivo de cabecera con funciones de utilidad
  */
 
+#ifndef OPENMP_VARIABLE
+#define OPENMP_VARIABLE
+
+extern bool openmp;
+
+#endif
+
 #ifndef UTIL_H
 #define UTIL_H
 
@@ -15,6 +22,10 @@
 #include <armadillo>
 #include <vector>
 #include <string>
+#include <chrono>
+
+// Definición de alias para el tipo de dato de los puntos
+typedef std::chrono::high_resolution_clock::time_point tiempo_punto;
 
 /************************************************************
 ************************************************************

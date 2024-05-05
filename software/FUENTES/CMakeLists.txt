@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-Project(P1_MH)
+Project(P2_MH)
 
 # Instalación de armadillo
 find_package(Armadillo REQUIRED)
@@ -18,9 +18,9 @@ file(GLOB_RECURSE SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/*)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../BIN)
 
 # Flags del compilador
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra -larmadillo -Ofast")
+set(CMAKE_CXX_FLAGS "-std=c++11 -larmadillo -Ofast -fopenmp")
 
 # Ejecutable
-add_executable(P1_MH ${SOURCE_FILES})
+add_executable(P2_MH ${SOURCE_FILES})
 
-target_link_libraries(P1_MH ${ARMADILLO_LIBRARIES})
+target_link_libraries(P2_MH ${ARMADILLO_LIBRARIES})
