@@ -9,7 +9,7 @@
 #ifndef P2_H
 #define P2_H
 
-#include <set>
+#include <algorithm>
 #include "p1.h"
 
 /************************************************************
@@ -99,7 +99,7 @@ typedef std::vector<Cromosoma> Poblacion;
  * Multiset para almacenar los cromosomas y que se ordenen por fitness
  * 
  */
-typedef std::multiset<Cromosoma, CompareCromosoma> Poblacion_ordenada;
+//typedef std::multiset<Cromosoma, CompareCromosoma> Poblacion_ordenada;
 
 /************************************************************
 ************************************************************
@@ -118,12 +118,14 @@ Poblacion poblacion_inicial(const Dataset &datos);
 
 /**
  * @brief
- * Función para ordenar la población de cromosomas por fitnes
+ * Función para ordenar la población de cromosomas por fitness y devolver el 
+ * individuo en la posición pos
  * 
  * @param poblacion Población de cromosomas
- * @return Poblacion_ordenada Población ordenada
+ * @param pos Posición del individuo a devolver
+ * @return Cromosoma Cromosoma en la posición pos
  */
-Poblacion_ordenada ordenar_poblacion(const Poblacion &poblacion);
+Cromosoma ordenar_poblacion(const Poblacion &poblacion, int pos);
 
 /************************************************************
 ************************************************************

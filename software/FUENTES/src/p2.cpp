@@ -28,12 +28,10 @@ Poblacion poblacion_inicial(const Dataset &datos) {
   return poblacion;
 }
 
-Poblacion_ordenada ordenar_poblacion(const Poblacion &poblacion) {
-  Poblacion_ordenada poblacion_ordenada;
-  for (const Cromosoma &cromosoma : poblacion) {
-    poblacion_ordenada.insert(cromosoma);
-  }
-  return poblacion_ordenada;
+Cromosoma ordenar_poblacion(const Poblacion &poblacion, int pos) {
+  Poblacion aux = poblacion;
+  nth_element(aux.begin(), aux.begin()+pos, aux.end(), CompareCromosoma());
+  return aux[pos];
 }
 
 /************************************************************
@@ -175,7 +173,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
     }
   
     // Ordenamos la población original y la de hijos
-    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
+    /* Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
     Poblacion_ordenada hijos = ordenar_poblacion(poblacion_intermedia);
     Cromosoma mejor_solucion_original = *poblacion_original.begin();
 
@@ -189,7 +187,23 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
         int idx = distance(poblacion_intermedia.begin(), it);
         poblacion_intermedia[idx] = mejor_solucion_original;
       }
+    } */
+    
+    // Cogemos al mejor padre
+    Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
+    // Si el mejor padre no se encuentra en la poblacion de hijos
+    if (find (poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_padre) == poblacion_intermedia.end()) {
+      Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
+      // Si el mejor hijo es peor que el mejor padre
+      if (mejor_padre.fitness > mejor_hijo.fitness) {
+        // Sustituimos al peor hijo por el mejor padre 
+        Cromosoma peor_hijo = ordenar_poblacion(poblacion_intermedia, NUM_INDIVIDUOS_AGG-1);
+        int idx = distance(poblacion_intermedia.begin(), 
+                           find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
+        poblacion_intermedia[idx] = mejor_padre;
+      }
     }
+
 
     // Actualizamos la población
     poblacion = poblacion_intermedia;
@@ -199,8 +213,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
   }
 
   // Cogemos y devolvemos el mejor individuo
-  Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
-  return poblacion_ordenada.begin()->caracteristicas;
+  return ordenar_poblacion(poblacion, 0).caracteristicas;
 }
 
 
@@ -249,14 +262,20 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
     }
   
     // Ordenamos la población original y cogemos a los 2 peores individuos
-    Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
+    /* Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
     Cromosoma peor_solucion_original = *prev(poblacion_original.end());
-    Cromosoma peor_solucion_original2 = *prev(prev(poblacion_original.end()));
+    Cromosoma peor_solucion_original2 = *prev(prev(poblacion_original.end())); */
+    Cromosoma peor_solucion_original = ordenar_poblacion(poblacion, poblacion.size()-1);
+    Cromosoma peor_solucion_original2 = ordenar_poblacion(poblacion, poblacion.size()-2);
     
     // De los 2 hijos y los 2 peores de la poblacion original, cogemos los 2 mejores
-    Poblacion_ordenada mejores = ordenar_poblacion(poblacion_intermedia);
+    /* Poblacion_ordenada mejores = ordenar_poblacion(poblacion_intermedia);
     mejores.insert(peor_solucion_original);
-    mejores.insert(peor_solucion_original2);
+    mejores.insert(peor_solucion_original2); */
+    Poblacion mejores = {poblacion_intermedia[0],
+                         poblacion_intermedia[1],
+                         peor_solucion_original,
+                         peor_solucion_original2};
 
     // Sacar índices de los 2 sustituidos en la población
     auto it1 = find(poblacion.begin(), poblacion.end(), peor_solucion_original);
@@ -265,8 +284,10 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
     // Sustituir los 2 peores de la población por los 2 mejores de la población intermedia
     int idx1 = distance(poblacion.begin(), it1);
     int idx2 = distance(poblacion.begin(), it2);
-    poblacion[idx1] = *mejores.begin();
-    poblacion[idx2] = *next(mejores.begin());
+
+    partial_sort(mejores.begin(), mejores.begin()+2, mejores.end(), CompareCromosoma());
+    poblacion[idx1] = mejores[0];
+    poblacion[idx2] = mejores[1];
 
     // Actualizamos el numero de iteraciones
     num_iter += poblacion_intermedia.size();
@@ -274,8 +295,9 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
   }
 
   // Cogemos y devolvemos el mejor individuo
-  Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
-  return poblacion_ordenada.begin()->caracteristicas;
+  /* Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
+  return poblacion_ordenada.begin()->caracteristicas; */
+  return ordenar_poblacion(poblacion, 0).caracteristicas;
 }
 
 /************************************************************
@@ -391,19 +413,19 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
         mutacion(poblacion_intermedia[idx], gen);
       }
     
-      // Orden
-      Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
-      Cromosoma mejor_solucion_original = *poblacion_original.begin();
-
-      // Si la mejor solucion original no se encuentra en la poblacion de hijos
-      if (find(poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_solucion_original) == poblacion_intermedia.end()) {
-        // Si la mejor solucion de los hijos es peor que la mejor solucion original
-        if (mejor_solucion_original.fitness > poblacion_intermedia.begin()->fitness) {
-          // Buscamos la peor solucion de los hijos en la poblacion intermedia
-          auto it = find (poblacion_intermedia.begin(), poblacion_intermedia.end(), *prev(poblacion_intermedia.end()));
-          // Sustituimos la peor solucion de los hijos por la mejor solucion original
-          int idx = distance(poblacion_intermedia.begin(), it);
-          poblacion_intermedia[idx] = mejor_solucion_original;
+      // Cogemos al mejor padre
+      nth_element(poblacion.begin(), poblacion.begin(), poblacion.end(), CompareCromosoma());
+      Cromosoma mejor_padre = poblacion[0];
+      // Si el mejor padre no se encuentra en la poblacion de hijos
+      if (find (poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_padre) == poblacion_intermedia.end()) {
+        Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
+        // Si el mejor hijo es peor que el mejor padre
+        if (mejor_padre.fitness > mejor_hijo.fitness) {
+          // Sustituimos al peor hijo por el mejor padre 
+          Cromosoma peor_hijo = ordenar_poblacion(poblacion_intermedia, NUM_INDIVIDUOS_AGG-1);
+          int idx = distance(poblacion_intermedia.begin(), 
+                            find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
+          poblacion_intermedia[idx] = mejor_padre;
         }
       }
 
@@ -448,14 +470,15 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
         }
 
         else if (tipoAlg == 2) {
-          Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
           for (size_t i = 0; i < num_cromosomas_bl; ++i) {
-            Cromosoma cromosoma = BL_BI(datos, *poblacion_ordenada.begin(), num_iter);
+            //Cromosoma a aplicar la BL
+            Cromosoma cromosoma_orig = ordenar_poblacion(poblacion, i);
+            // Aplicar la BL
+            Cromosoma cromosoma = BL_BI(datos, cromosoma_orig, num_iter);
             // Buscar indice del cromosoma en la poblacion
-            auto it = find(poblacion.begin(), poblacion.end(), *poblacion_ordenada.begin());
+            auto it = find(poblacion.begin(), poblacion.end(), cromosoma_orig);
             int idx = distance(poblacion.begin(), it);
             poblacion[idx] = cromosoma;
-            poblacion_ordenada.erase(poblacion_ordenada.begin());
           }
         }
 
@@ -466,8 +489,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
   }
 
   // Cogemos y devolvemos el mejor individuo
-  Poblacion_ordenada poblacion_ordenada = ordenar_poblacion(poblacion);
-  return poblacion_ordenada.begin()->caracteristicas;
+  return ordenar_poblacion(poblacion, 0).caracteristicas;
 }
 
 arma::rowvec AM_All(const Dataset &datos){
