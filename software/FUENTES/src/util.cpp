@@ -12,8 +12,7 @@
 
 using namespace std;
 
-// Variable global para activar/desactivar OpenMP
-bool openmp = true;
+bool openmp = false;
 
 /************************************************************
 ************************************************************
@@ -167,16 +166,34 @@ FUNCIONES DE EVALUACIÓN
 ************************************************************/
 
 double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::rowvec &pesos){
-  size_t aciertos = 0;
+  double aciertos = 0;
 
-  for (size_t i = 0; i < test.data.n_rows; ++i) {
+  /* for (size_t i = 0; i < test.data.n_rows; ++i) {
     string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
     if (categoria == test.categoria[i]) {
-      ++aciertos;
+      aciertos++;
+    }
+  } */
+
+  if (openmp){
+    #pragma omp parallel for reduction(+:aciertos)
+    for (size_t i = 0; i < test.data.n_rows; ++i) {
+      string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
+      if (categoria == test.categoria[i]) {
+        aciertos++;
+      }
+    }
+  }
+  else{
+    for (size_t i = 0; i < test.data.n_rows; ++i) {
+      string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
+      if (categoria == test.categoria[i]) {
+        aciertos++;
+      }
     }
   }
 
-  return static_cast<double>(aciertos) / test.data.n_rows * 100.0;
+  return aciertos / test.data.n_rows * 100.0;
 }
 
 // Usando Leave-One-Out
@@ -188,7 +205,7 @@ double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
     for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
       string categoria = clasificador1NN(i, entrenamiento, pesos);
       if (categoria == entrenamiento.categoria[i]) {
-        ++aciertos;
+        aciertos++;
       }
     }
   }
@@ -196,7 +213,7 @@ double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
     for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
       string categoria = clasificador1NN(i, entrenamiento, pesos);
       if (categoria == entrenamiento.categoria[i]) {
-        ++aciertos;
+        aciertos++;
       }
     }
   }
@@ -212,14 +229,14 @@ double tasa_red(const arma::rowvec &pesos){
     #pragma omp parallel for reduction(+:descartados)
     for (size_t i = 0; i < pesos.size(); ++i) {
       if (pesos(i) <= 0.1) {
-        ++descartados;
+        descartados++;
       }
     }
   }
   else{
     for (size_t i = 0; i < pesos.size(); ++i) {
       if (pesos(i) <= 0.1) {
-        ++descartados;
+        descartados++;
       }
     }
   }

@@ -23,6 +23,9 @@ int main(int argc, char const **argv) {
       openmp = false;
     }
   }
+  else {
+    openmp = true;
+  }
 
   long int semilla = strtol(argv[1], nullptr, 10);
   Random::seed(semilla);
@@ -40,10 +43,10 @@ int main(int argc, char const **argv) {
   printResultados(3);
 
   // Para algoritmo AGG-CA
-  printResultados(4);
+  //printResultados(4);
 
   // Para algoritmo AGE-BLX
-  //printResultados(5);
+  printResultados(5);
 
   // Para algoritmo AGE-CA
   //printResultados(6);

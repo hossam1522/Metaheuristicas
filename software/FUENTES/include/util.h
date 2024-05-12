@@ -23,6 +23,7 @@ extern bool openmp;
 #include <vector>
 #include <string>
 #include <chrono>
+#include <omp.h>
 
 // Definición de alias para el tipo de dato de los puntos
 typedef std::chrono::high_resolution_clock::time_point tiempo_punto;

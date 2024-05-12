@@ -204,9 +204,15 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
       }
     }
 
-
     // Actualizamos la población
+    poblacion.clear();
     poblacion = poblacion_intermedia;
+    /* for (auto cromosoma : poblacion_intermedia) {
+      poblacion.push_back(cromosoma);
+    } */
+    /* for (size_t i = 0; i < poblacion_intermedia.size(); ++i) {
+      poblacion[i] = poblacion_intermedia[i];
+    } */
     
     // Actualizamos el numero de iteraciones
     num_iter += poblacion_intermedia.size();
@@ -520,23 +526,23 @@ void printResultados(int algoritmo) {
   if (algoritmo == 0)
     cout << "*********************** 1-NN sin ponderaciones *******************************" << endl;
   else if (algoritmo == 1)
-    cout << "*********************** Greedy Relief (1-NN) *********************************" << endl;
+    cout << "*********************** Greedy Relief ****************************************" << endl;
   else if (algoritmo == 2)
-    cout << "*********************** Búsqueda Local (1-NN) ********************************" << endl;
+    cout << "*********************** Búsqueda Local ***************************************" << endl;
   else if (algoritmo == 3)
-    cout << "*********************** AGG-BLX (1-NN) ***************************************" << endl;
+    cout << "*********************** AGG-BLX **********************************************" << endl;
   else if (algoritmo == 4)
-    cout << "*********************** AGG-CA (1-NN) ****************************************" << endl;
+    cout << "*********************** AGG-CA ***********************************************" << endl;
   else if (algoritmo == 5)
-    cout << "*********************** AGE-BLX (1-NN) ***************************************" << endl;
+    cout << "*********************** AGE-BLX **********************************************" << endl;
   else if (algoritmo == 6)
-    cout << "*********************** AGE-CA (1-NN) ****************************************" << endl;
+    cout << "*********************** AGE-CA ***********************************************" << endl;
   else if (algoritmo == 7)
-    cout << "*********************** AM-(10,1.0) (1-NN) **********************************" << endl;
+    cout << "*********************** AM-(10,1.0) *****************************************" << endl;
   else if (algoritmo == 8)
-    cout << "*********************** AM-(10,0.1) (1-NN) **********************************" << endl;
+    cout << "*********************** AM-(10,0.1) *****************************************" << endl;
   else if (algoritmo == 9)
-    cout << "*********************** AM-(10,0.1mej) (1-NN) *******************************" << endl;
+    cout << "*********************** AM-(10,0.1mej) **************************************" << endl;
   cout << "******************************************************************************" << endl;
   cout << "******************************************************************************" << endl;
 
@@ -725,7 +731,7 @@ void printResultados(int algoritmo) {
     cout << "....................................................................................................." << endl << endl;
   
     // Mostrar los pesos de cada particion separados por comas
-    if (algoritmo == 2){
+    /* if (algoritmo == 2){
       cout << "Pesos obtenidos en cada partición:" << endl;
       for (size_t i = 0; i < total_pesos.size(); ++i) {
         cout << "Partición " << i+1 << ": ";
@@ -737,7 +743,7 @@ void printResultados(int algoritmo) {
         }
         cout << endl;
       }
-    }
+    } */
 
     total_pesos.clear();
   }

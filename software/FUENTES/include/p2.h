@@ -66,11 +66,31 @@ ESTRUCTURAS DE DATOS
  * Estructura para almacenar los datos de un cromosoma
  * 
  */
-struct Cromosoma {
+/* struct Cromosoma {
     arma::rowvec caracteristicas;
     double fitness;
 
     bool operator == (const Cromosoma &c) const {
+        return arma::approx_equal(caracteristicas, c.caracteristicas, "absdiff", 1e-5);
+    }
+}; */
+struct Cromosoma {
+    arma::rowvec caracteristicas;
+    double fitness;
+
+    // Constructor de copia
+    //Cromosoma(const Cromosoma& otro) : caracteristicas(otro.caracteristicas), fitness(otro.fitness) {}
+
+    // Operador de asignación
+    /* Cromosoma& operator=(const Cromosoma& otro) {
+        if (this != &otro) {
+            caracteristicas = otro.caracteristicas;
+            fitness = otro.fitness;
+        }
+        return *this;
+    } */
+
+    bool operator==(const Cromosoma &c) const {
         return arma::approx_equal(caracteristicas, c.caracteristicas, "absdiff", 1e-5);
     }
 };
