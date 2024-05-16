@@ -17,7 +17,7 @@ Poblacion poblacion_inicial(const Dataset &datos) {
     Cromosoma cromosoma;
     cromosoma.caracteristicas.set_size(datos.data.n_cols);
     for (int j = 0; j < datos.data.n_cols; ++j) {
-      cromosoma.caracteristicas.insert_cols(j, Random::get(distribucion_uniforme));
+      cromosoma.caracteristicas(j) = Random::get(distribucion_uniforme);
     }
     double tasa_clasif = tasa_clas(datos, cromosoma.caracteristicas);
     double tasa_reducc = tasa_red(cromosoma.caracteristicas);
@@ -151,7 +151,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
 
     // Cruce (con probabilidad PROB_CRUCE_AGG)
     Cromosoma hijo1, hijo2;
-    size_t num_esperado_cruces = NUM_INDIVIDUOS_AGG/2 * PROB_CRUCE_AGG;
+    size_t num_esperado_cruces = ((double)NUM_INDIVIDUOS_AGG/2) * PROB_CRUCE_AGG;
     for (size_t i = 0; i < num_esperado_cruces*2; i+=2) {
       if (tipoCruce == 0)
         cruceBLX(datos, poblacion_intermedia[i], poblacion_intermedia[i+1], hijo1, hijo2);
@@ -172,23 +172,6 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
       mutacion(poblacion_intermedia[idx], gen);
     }
   
-    // Ordenamos la población original y la de hijos
-    /* Poblacion_ordenada poblacion_original = ordenar_poblacion(poblacion);
-    Poblacion_ordenada hijos = ordenar_poblacion(poblacion_intermedia);
-    Cromosoma mejor_solucion_original = *poblacion_original.begin();
-
-    // Si la mejor solucion original no se encuentra en la poblacion de hijos
-    if (find(hijos.begin(), hijos.end(), mejor_solucion_original) == hijos.end()) {
-      // Si la mejor solucion de los hijos es peor que la mejor solucion original
-      if (mejor_solucion_original.fitness > hijos.begin()->fitness) {
-        // Buscamos la peor solucion de los hijos en la poblacion intermedia
-        auto it = find (poblacion_intermedia.begin(), poblacion_intermedia.end(), *prev(hijos.end()));
-        // Sustituimos la peor solucion de los hijos por la mejor solucion original
-        int idx = distance(poblacion_intermedia.begin(), it);
-        poblacion_intermedia[idx] = mejor_solucion_original;
-      }
-    } */
-    
     // Cogemos al mejor padre
     Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
     // Si el mejor padre no se encuentra en la poblacion de hijos
@@ -204,15 +187,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
       }
     }
 
-    // Actualizamos la población
-    poblacion.clear();
     poblacion = poblacion_intermedia;
-    /* for (auto cromosoma : poblacion_intermedia) {
-      poblacion.push_back(cromosoma);
-    } */
-    /* for (size_t i = 0; i < poblacion_intermedia.size(); ++i) {
-      poblacion[i] = poblacion_intermedia[i];
-    } */
     
     // Actualizamos el numero de iteraciones
     num_iter += poblacion_intermedia.size();
@@ -278,10 +253,8 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce){
     /* Poblacion_ordenada mejores = ordenar_poblacion(poblacion_intermedia);
     mejores.insert(peor_solucion_original);
     mejores.insert(peor_solucion_original2); */
-    Poblacion mejores = {poblacion_intermedia[0],
-                         poblacion_intermedia[1],
-                         peor_solucion_original,
-                         peor_solucion_original2};
+    Poblacion mejores = {poblacion_intermedia[0], poblacion_intermedia[1],
+                         peor_solucion_original, peor_solucion_original2};
 
     // Sacar índices de los 2 sustituidos en la población
     auto it1 = find(poblacion.begin(), poblacion.end(), peor_solucion_original);
@@ -397,14 +370,8 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       Cromosoma hijo1, hijo2;
       size_t num_esperado_cruces = NUM_INDIVIDUOS_AM/2 * PROB_CRUCE_AM;
       for (size_t i = 0; i < num_esperado_cruces*2; i+=2) {
-
-        // Mirar cuál proporciona mejores resultados, por ahora usar BLX
-        //if (tipoCruce == 0)
-        //  cruceBLX(datos, poblacion_intermedia[i], poblacion_intermedia[i+1], hijo1, hijo2);
-        //else if (tipoCruce == 1)
-        //  cruceAritmetico(datos, poblacion_intermedia[i], poblacion_intermedia[i+1], hijo1, hijo2);
+        // BLX porque es el que mejores resultados da
         cruceBLX(datos, poblacion_intermedia[i], poblacion_intermedia[i+1], hijo1, hijo2);
-
         poblacion_intermedia[i] = hijo1;
         poblacion_intermedia[i+1] = hijo2;
       }
@@ -420,8 +387,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       }
     
       // Cogemos al mejor padre
-      nth_element(poblacion.begin(), poblacion.begin(), poblacion.end(), CompareCromosoma());
-      Cromosoma mejor_padre = poblacion[0];
+      Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
       // Si el mejor padre no se encuentra en la poblacion de hijos
       if (find (poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_padre) == poblacion_intermedia.end()) {
         Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);

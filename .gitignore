@@ -5,8 +5,10 @@ CMakeFiles/
 tmp.txt
 *.zip
 *.pdf
+!Guion*.pdf
 build/
 Makefile
 P1_MH
 P2_MH
 P3_MH
+*.txt

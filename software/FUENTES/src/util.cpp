@@ -192,6 +192,12 @@ double tasa_clas(const Dataset &test, const Dataset &entrenamiento, const arma::
       }
     }
   }
+  /* for (size_t i = 0; i < test.data.n_rows; ++i) {
+    string categoria = clasificador1NN(test.data.row(i), entrenamiento, pesos);
+    if (categoria == test.categoria[i]) {
+      aciertos++;
+    }
+  } */
 
   return aciertos / test.data.n_rows * 100.0;
 }
@@ -218,6 +224,13 @@ double tasa_clas(const Dataset &entrenamiento, const arma::rowvec &pesos){
     }
   }
 
+  /* for (size_t i = 0; i < entrenamiento.data.n_rows; ++i) {
+    string categoria = clasificador1NN(i, entrenamiento, pesos);
+    if (categoria == entrenamiento.categoria[i]) {
+      aciertos++;
+    }
+  } */
+
   return aciertos / entrenamiento.data.n_rows * 100.0;
 }
 
@@ -240,6 +253,12 @@ double tasa_red(const arma::rowvec &pesos){
       }
     }
   }
+
+  /* for (size_t i = 0; i < pesos.size(); ++i) {
+    if (pesos(i) <= 0.1) {
+      descartados++;
+    }
+  } */
 
   return descartados / pesos.size()* 100.0;
 }
