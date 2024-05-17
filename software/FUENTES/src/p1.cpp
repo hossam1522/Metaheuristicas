@@ -86,16 +86,21 @@ BUSQUEDA LOCAL
 ************************************************************
 ************************************************************/
 
-arma::rowvec busquedaLocal(const Dataset &datos){
+pair<arma::rowvec, double> busquedaLocal(const Dataset &datos, const arma::rowvec &v_pesos,
+                                              int &iteraciones, const int max_vecinos, const int max_iter){
   normal_distribution<double> distribucion_normal(0.0, SIGMA);
-  uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
 
   vector<int> indices(datos.data.n_cols);
   arma::rowvec pesos(datos.data.n_cols);
 
   // La solución inicial se generará de forma aleatoria utilizando una distribución uniforme en [0, 1]
-  for (size_t i = 0; i < pesos.size(); ++i) 
-    pesos(i) = Random::get(distribucion_uniforme);
+  if (v_pesos.size() == 0) {
+    uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
+    for (size_t i = 0; i < pesos.size(); ++i) 
+      pesos(i) = Random::get(distribucion_uniforme);
+  } else {
+    pesos = v_pesos;
+  }
 
   for (size_t i = 0; i < pesos.size(); ++i) 
     indices[i] = i;
@@ -109,7 +114,7 @@ arma::rowvec busquedaLocal(const Dataset &datos){
   int num_iteraciones = 0;
   size_t num_vecinos = 0;
   bool mejora = false;
-  while ( num_iteraciones < MAX_ITER && num_vecinos < (pesos.n_cols+1)*CONST_MAX_VECINOS){
+  while ( num_iteraciones+iteraciones < max_iter && num_vecinos < (pesos.n_cols+1)*max_vecinos){
     int componente = indices[num_iteraciones % pesos.n_cols];
 
     // Mutamos la solución actual
@@ -147,8 +152,9 @@ arma::rowvec busquedaLocal(const Dataset &datos){
     
   }
 
-  return pesos;
+  iteraciones += num_iteraciones;
 
+  return make_pair(pesos, mejor_fit);
 }
 
 

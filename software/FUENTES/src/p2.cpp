@@ -173,7 +173,7 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
     }
   
     // Cogemos al mejor padre
-    Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
+    /* Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
     // Si el mejor padre no se encuentra en la poblacion de hijos
     if (find (poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_padre) == poblacion_intermedia.end()) {
       Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
@@ -182,9 +182,22 @@ arma::rowvec AGG (const Dataset &datos, int tipoCruce){
         // Sustituimos al peor hijo por el mejor padre 
         Cromosoma peor_hijo = ordenar_poblacion(poblacion_intermedia, NUM_INDIVIDUOS_AGG-1);
         int idx = distance(poblacion_intermedia.begin(), 
-                           find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
+                          find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
         poblacion_intermedia[idx] = mejor_padre;
       }
+    } */
+
+    // Para mantener el elitismo, comprobamos si el mejor individuo de la población original
+    // (el mejor padre) es mejor que el mejor individuo de la población intermedia (el mejor hijo)
+    // En caso afirmativo, significa que el padre no se encuentra en la población intermedia,
+    // y como no hay ningún individuo mejor que él, lo sustituimos por el peor hijo
+    Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
+    Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
+    if (mejor_padre.fitness > mejor_hijo.fitness) {
+      Cromosoma peor_hijo = ordenar_poblacion(poblacion_intermedia, NUM_INDIVIDUOS_AGG-1);
+      int idx = distance(poblacion_intermedia.begin(), 
+                        find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
+      poblacion_intermedia[idx] = mejor_padre;
     }
 
     poblacion = poblacion_intermedia;
@@ -387,7 +400,7 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       }
     
       // Cogemos al mejor padre
-      Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
+      /* Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
       // Si el mejor padre no se encuentra en la poblacion de hijos
       if (find (poblacion_intermedia.begin(), poblacion_intermedia.end(), mejor_padre) == poblacion_intermedia.end()) {
         Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
@@ -399,6 +412,19 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
                             find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
           poblacion_intermedia[idx] = mejor_padre;
         }
+      } */
+
+      // Para mantener el elitismo, comprobamos si el mejor individuo de la población original
+      // (el mejor padre) es mejor que el mejor individuo de la población intermedia (el mejor hijo)
+      // En caso afirmativo, significa que el padre no se encuentra en la población intermedia,
+      // y como no hay ningún individuo mejor que él, lo sustituimos por el peor hijo
+      Cromosoma mejor_padre = ordenar_poblacion(poblacion, 0);
+      Cromosoma mejor_hijo = ordenar_poblacion(poblacion_intermedia, 0);
+      if (mejor_padre.fitness > mejor_hijo.fitness) {
+        Cromosoma peor_hijo = ordenar_poblacion(poblacion_intermedia, NUM_INDIVIDUOS_AM-1);
+        int idx = distance(poblacion_intermedia.begin(), 
+                          find(poblacion_intermedia.begin(), poblacion_intermedia.end(), peor_hijo));
+        poblacion_intermedia[idx] = mejor_padre;
       }
 
       // Actualizamos la población
@@ -414,7 +440,12 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
       
       if (tipoAlg == 0) {
         for (size_t i = 0; i < poblacion.size(); ++i) {
-          Cromosoma cromosoma = BL_BI(datos, poblacion[i], num_iter);
+          //Cromosoma cromosoma = BL_BI(datos, poblacion[i], num_iter);
+          /* pair<arma::rowvec, double> r = busquedaLocal(datos, poblacion[i].caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
+          Cromosoma cromosoma;
+          cromosoma.caracteristicas = r.first;
+          cromosoma.fitness = r.second; */
+          Cromosoma cromosoma = busquedaLocal(datos, poblacion[i].caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
           poblacion[i] = cromosoma;
         }
       }
@@ -434,7 +465,12 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
             }
             indices.push_back(idx);
             
-            Cromosoma cromosoma = BL_BI(datos, poblacion[idx], num_iter);
+            //Cromosoma cromosoma = BL_BI(datos, poblacion[idx], num_iter);
+            /* pair<arma::rowvec, double> r = busquedaLocal(datos, poblacion[idx].caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
+            Cromosoma cromosoma;
+            cromosoma.caracteristicas = r.first;
+            cromosoma.fitness = r.second; */
+            Cromosoma cromosoma = busquedaLocal(datos, poblacion[idx].caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
             poblacion[idx] = cromosoma;
           } 
 
@@ -446,7 +482,12 @@ arma::rowvec AM (const Dataset &datos, int tipoAlg){
             //Cromosoma a aplicar la BL
             Cromosoma cromosoma_orig = ordenar_poblacion(poblacion, i);
             // Aplicar la BL
-            Cromosoma cromosoma = BL_BI(datos, cromosoma_orig, num_iter);
+            //Cromosoma cromosoma = BL_BI(datos, cromosoma_orig, num_iter);
+            /* pair<arma::rowvec, double> r = busquedaLocal(datos, cromosoma_orig.caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
+            Cromosoma cromosoma;
+            cromosoma.caracteristicas = r.first;
+            cromosoma.fitness = r.second; */
+            Cromosoma cromosoma = busquedaLocal(datos, cromosoma_orig.caracteristicas, num_iter, CONST_MAX_VECINOS_P2, MAX_ITER);
             // Buscar indice del cromosoma en la poblacion
             auto it = find(poblacion.begin(), poblacion.end(), cromosoma_orig);
             int idx = distance(poblacion.begin(), it);
@@ -599,14 +640,16 @@ void printResultados(int algoritmo) {
         entrenamiento.categoria.insert(entrenamiento.categoria.end(), entrenam[j].categoria.begin(), entrenam[j].categoria.end());
       }
 
-      arma::rowvec w(test.data.n_cols);
+      arma::rowvec w;
       
       tiempo_punto momentoInicio, momentoFin;
 
       if (algoritmo == 0){
+        w.resize(entrenamiento.data.n_cols);
+        w.fill(1.0);
         // Vector de pesos para el algoritmo 1-NN
-        for(size_t j = 0; j < w.size(); ++j)
-          w[j] = 1.0;
+        //for(size_t j = 0; j < w.size(); ++j)
+          //w[j] = 1.0;
       }
       else if (algoritmo == 1){
         momentoInicio = chrono::high_resolution_clock::now();
@@ -617,7 +660,9 @@ void printResultados(int algoritmo) {
       else if (algoritmo == 2){
         momentoInicio = chrono::high_resolution_clock::now();
         // Vector de pesos para el algoritmo Búsqueda Local
-        w = busquedaLocal(entrenamiento);
+        //w = busquedaLocal(entrenamiento).first;
+        int num = 0;
+        w = busquedaLocal(entrenamiento, w, num, CONST_MAX_VECINOS, MAX_ITER).first;
         momentoFin = chrono::high_resolution_clock::now();
       }
       else if (algoritmo == 3){

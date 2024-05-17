@@ -78,6 +78,21 @@ struct Cromosoma {
     arma::rowvec caracteristicas;
     double fitness;
 
+    // Constructor por defecto
+    Cromosoma() {}
+
+    // Cronstructor por parámetros
+    Cromosoma(arma::rowvec c, double f) {
+        caracteristicas = c;
+        fitness = f;
+    }
+
+    // Constructor para pasar de pair a Cromosoma
+    Cromosoma(std::pair <arma::rowvec, double> p) {
+        caracteristicas = p.first;
+        fitness = p.second;
+    }
+
     bool operator==(const Cromosoma &c) const {
         return arma::approx_equal(caracteristicas, c.caracteristicas, "absdiff", 1e-5);
     }
