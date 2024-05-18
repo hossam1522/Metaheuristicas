@@ -9,7 +9,8 @@ int main(int argc, char const **argv) {
     cout << "Donde:" << endl;
     cout << "  <semilla> es la semilla para el generador de números aleatorios" << endl;
     cout << "  <openmp> es un valor booleano opcional para activar/desactivar OpenMP (por defecto, es true)" << endl;
-    cout << "     true: activa OpenMP   false: desactiva OpenMP" << endl;
+    cout << "     true: activa OpenMP " << endl;
+    cout << "     false: desactiva OpenMP " << endl;
     cout << "     Si se indica un valor distinto de true o false, se mantendrá el valor por defecto" << endl;
     cout << "Ejemplo: " << argv[0] << " 97435 false" << endl;
     return 1;
@@ -33,10 +34,10 @@ int main(int argc, char const **argv) {
   // Para algoritmo 1NN sin ponderación
   printResultados(0);
 
-  // Para algoritmo 1NN usando Greedy Relief
+  // Para algoritmo Greedy Relief
   printResultados(1);
 
-  // Para algoritmo 1NN usando Búsqueda Local
+  // Para algoritmo Búsqueda Local
   printResultados(2);
 
   // Para algoritmo AGG-BLX

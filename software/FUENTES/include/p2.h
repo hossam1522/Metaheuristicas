@@ -46,9 +46,6 @@ const int NUM_INDIVIDUOS_AM = 50;
 // Probabilidad de cruce en el AM
 const double PROB_CRUCE_AM = 0.7;
 
-// Probabilidad de mutación por cromosoma en el AM
-const double PROB_MUTACION_AM = 0.7;
-
 // Frecuencia de aplicacion de la búsqueda local en el AM
 const int FREQ_BUSQUEDA_LOCAL = 10;
 
@@ -66,14 +63,6 @@ ESTRUCTURAS DE DATOS
  * Estructura para almacenar los datos de un cromosoma
  * 
  */
-/* struct Cromosoma {
-    arma::rowvec caracteristicas;
-    double fitness;
-
-    bool operator == (const Cromosoma &c) const {
-        return arma::approx_equal(caracteristicas, c.caracteristicas, "absdiff", 1e-5);
-    }
-}; */
 struct Cromosoma {
     arma::rowvec caracteristicas;
     double fitness;
@@ -117,12 +106,6 @@ struct CompareCromosoma {
  */
 typedef std::vector<Cromosoma> Poblacion;
 
-/**
- * @brief 
- * Multiset para almacenar los cromosomas y que se ordenen por fitness
- * 
- */
-//typedef std::multiset<Cromosoma, CompareCromosoma> Poblacion_ordenada;
 
 /************************************************************
 ************************************************************
@@ -208,10 +191,16 @@ void mutacion(Cromosoma &cromosoma, const int gen);
  * 
  * @param datos Conjunto de datos de entrenamiento
  * @param tipoCruce Tipo de cruce a aplicar (0 para BLX y 1 para aritmético)
+ * @param poblacion Población de cromosomas
+ * @param max_iter Número máximo de iteraciones
+ * @param num_individuos Número de individuos en la población
+ * @param prob_cruce Probabilidad de cruce
+ * @param prob_mutacion Probabilidad de mutación
  * @return arma::rowvec Pesos de las características
  */
 
-arma::rowvec AGG (const Dataset &datos, int tipoCruce);
+arma::rowvec AGG (const Dataset &datos, int tipoCruce, Poblacion &poblacion, const int max_iter,
+                  const int num_individuos, const double prob_cruce, const double prob_mutacion);                     
 
 /************************************************************
 ************************************************************
@@ -235,17 +224,6 @@ arma::rowvec AGE (const Dataset &datos, int tipoCruce);
 ALGORTIMOS MEMÉTICOS (AMs)
 ************************************************************
 ************************************************************/
-
-/**
- * @brief 
- * Función para aplicar la búsqueda local de baja intensidad
- * 
- * @param datos Conjunto de datos de entrenamiento
- * @param cromosoma Cromosoma a aplicar la búsqueda local
- * @param iteraciones Número de iteraciones que se han realizado
- * @return Cromosoma Cromosoma con la búsqueda local aplicada
- */
-Cromosoma BL_BI(const Dataset &datos, const Cromosoma &cromosoma, int &iteraciones);
 
 /**
  * @brief

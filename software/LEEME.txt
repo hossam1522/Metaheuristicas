@@ -1,19 +1,45 @@
+La prática se ha desarrollado en el leguaje de programación C++ y se ha usado la librería
+Armadillo para el manejo de matrices y vectores, sin usar ningún tipo de framework 
+de metaheurísticas.
+
+La instalación de la librería Armadillo se hace de la siguiente manera:
+
+
+        apt-get install libopenblas-dev liblapack-dev libarmadillo-dev
+
+
 Los principales archivos que se han implementado son los siguientes:
 
 - main.cpp: Archivo principal que contiene la función main y que se encarga de mostrar los
 resultados.
-- p1.cpp/p1.h: Archivo que contiene la implementación de los algoritmos y también la función
-para mostrar los resultados.
+
+- p1.cpp/p1.h: Archivo que contiene la implementación de los algoritmos Greedy RELIEF
+y Búsqueda Local. 
+
+- p2.cpp/p2.h: Archivo que contiene la implementación de los algoritmos genéticos generacionales,
+estacionarios y meméticos, además de las funciones comunes a estos algoritmos. También se encuentra aquí
+la función para mostrar los resultados.
+
 - util.cpp/util.h: Archivo que contiene las funciones para leer y normalizar los datos, además
 de las funciones comunes a ambos algoritmos, como la distancia euclídea, el clasificador 1-NN
 y las funciones para calcular la tasa de clasificación, la tasa de reducción y el fitness.
+
 - random.hpp: Archivo proporcionado por el profesor que se ha usado para la generación de
 nímeros aleatorios
+
 
 Para compilar el proyecto y ejecutar el proyecto, hay que seguir los siguientes pasos:
 1. Situarse en el directorio software/FUENTES.
 2. Ejecutar el comando "cmake ." para generar los archivos de compilación.
-3. Ejecutar el comando make para compilar el proyecto.
+3. Ejecutar el comando "make" para compilar el proyecto.
 4. Situarse en el directorio software/BIN.
-5. Ejecutar el programa proporcionando como único argumento una semilla para la generación
-de números aleatorios. Por ejemplo, ./P1_MH 97435
+5. Ejecutar el programa tal que:
+
+Uso: ./P2_MH <semilla> [<openmp>]
+Donde:
+  <semilla> es la semilla para el generador de números aleatorios
+  <openmp> es un valor booleano opcional para activar/desactivar OpenMP (por defecto, es true)
+     true: activa OpenMP   
+     false: desactiva OpenMP
+     Si se indica un valor distinto de true o false, se mantendrá el valor por defecto
+Ejemplo: ../BIN/P2_MH 97435 true
