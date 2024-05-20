@@ -81,6 +81,10 @@ BUSQUEDA LOCAL
  * Función para calcular el valor de los pesos de las características con Búsqueda Local 
  * 
  * @param datos Conjunto de datos de entrenamiento
+ * @param v_pesos Vector de pesos inicial
+ * @param iteraciones Número de iteraciones
+ * @param max_vecinos Número máximo de vecinos a considerar
+ * @param max_iter Número máximo de iteraciones
  * @return pair<arma::rowvec, double> Pesos de las características y fitness
  */
 std::pair<arma::rowvec, double> busquedaLocal(const Dataset &datos, const arma::rowvec &v_pesos,

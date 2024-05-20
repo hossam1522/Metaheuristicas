@@ -1,5 +1,5 @@
 #include <iostream>
-#include "p2.h"
+#include "p3.h"
 
 using namespace std;
 
@@ -32,34 +32,34 @@ int main(int argc, char const **argv) {
   Random::seed(semilla);
 
   // Para algoritmo 1NN sin ponderación
-  printResultados(0);
+  // printResultados(0);
 
   // Para algoritmo Greedy Relief
-  printResultados(1);
+  // printResultados(1);
 
   // Para algoritmo Búsqueda Local
-  printResultados(2);
+  // printResultados(2);
 
   // Para algoritmo AGG-BLX
-  printResultados(3);
+  // printResultados(3);
 
   // Para algoritmo AGG-CA
-  printResultados(4);
+  // printResultados(4);
 
   // Para algoritmo AGE-BLX
-  printResultados(5);
+  // printResultados(5);
 
   // Para algoritmo AGE-CA
-  printResultados(6);
+  // printResultados(6);
 
   // Para algoritmo AM-(10,1.0)
-  printResultados(7);
+  // printResultados(7);
 
   // Para algoritmo AM-(10,0.1)
-  printResultados(8);
+  // printResultados(8);
 
   // Para algoritmo AM-(10,0.1mej)
-  printResultados(9);
+  // printResultados(9);
 
   return 0;
 }

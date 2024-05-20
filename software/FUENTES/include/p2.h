@@ -272,25 +272,5 @@ arma::rowvec AM_Rand (const Dataset &datos);
 
 arma::rowvec AM_Best (const Dataset &datos);
 
-/************************************************************
-************************************************************
-FUNCIONES PARA MOSTRAR RESULTADOS
-************************************************************
-************************************************************/
-
-/**
- * @brief 
- * Función para mostrar los resultados de la tasa de clasificación y reducción
- * sin ponderaciones, con Greedy Relief, con Búsqueda Local, AGG-BLX, AGG-CA,
- * AGE-BLX, AGE-CA, AM-(10,1.0), AM-(10,0.1) y AM-(10,0.1mej)
- * 
- * @param algoritmo Algoritmo a mostrar, 0 para sin ponderaciones, 
- *                  1 para Greedy Relief, 2 para Búsqueda Local,
- *                  3 para AGG-BLX, 4 para AGG-CA, 5 para AGE-BLX,
- *                  6 para AGE-CA, 7 para AM-(10,1.0), 8 para AM-(10,0.1)
- *                  y 9 para AM-(10,0.1mej)
- */
-void printResultados(int algoritmo);
-
 
 #endif
