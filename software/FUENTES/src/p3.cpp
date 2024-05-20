@@ -55,38 +55,60 @@ ENFRIAMIENTO SIMULADO (ES)
 ************************************************************
 ************************************************************/
 
-arma::rowvec ES(const Dataset &datos, const Solucion &solucion){
+arma::rowvec ES(const Dataset &datos, const Solucion &solucion_pasada){
   uniform_int_distribution<int> distribucion_componente(0, datos.data.n_cols-1);
   normal_distribution<double> distribucion_normal(0.0, SIGMA);
 
-  Solucion solucion_inicial = solucion_aleatoria(datos, datos.data.n_cols);
-  Solucion mejor_solucion = solucion_inicial;
-  double T0 = MU * solucion_inicial.fitness / -log(PHI);
+  Solucion solucion;
+
+  if (solucion_pasada.pesos.n_cols == 0)
+    solucion = solucion_aleatoria(datos, datos.data.n_cols);
+  else 
+    solucion = solucion_pasada;
+
+  Solucion mejor_solucion = solucion;
+  double T0 = MU * solucion.fitness / -log(PHI);
 
   int num_vecinos = 0;
   int num_exitos = 0;
   int num_iter = 0;
-  double max_vecinos = MAX_VECINOS_ES*datos.data.n_cols;
-  double max_exitos = MAX_EXITOS * max_vecinos;
+  const double max_vecinos = MAX_VECINOS_ES*datos.data.n_cols;
+  const double max_exitos = MAX_EXITOS * max_vecinos;
+  const double M = MAX_ITER_ES / max_vecinos;
+  const double BETA = (T0 - Tf) / (M * T0 * Tf);
 
   while (num_iter < MAX_ITER_ES && num_exitos != 0){
     
-    // Componente a mutar
-    int componente = Random::get(distribucion_componente);
+    num_vecinos = 0;
+    num_exitos = 0;
 
-    // Mutamos la solución actual
-    arma::rowvec pesos_mutados = solucion_inicial.pesos;
-    pesos_mutados(componente) += Random::get(distribucion_normal);
+    while (num_vecinos < max_vecinos && num_exitos < max_exitos && num_iter < MAX_ITER_ES){
+      arma::rowvec pesos_mutados = solucion.pesos;
+      int componente = Random::get(distribucion_componente);
+      pesos_mutados(componente) += Random::get(distribucion_normal);
 
-    // Truncamos el valor de la componente mutada
-    if (pesos_mutados(componente) < 0.0) pesos_mutados(componente) = 0.0;
-    if (pesos_mutados(componente) > 1.0) pesos_mutados(componente) = 1.0;
+      if (pesos_mutados(componente) < 0.0) pesos_mutados(componente) = 0.0;
+      if (pesos_mutados(componente) > 1.0) pesos_mutados(componente) = 1.0;
 
-    // Calculamos el fitness de la solución mutada
-    double tasa_clasif = tasa_clas(datos, pesos_mutados);
-    double tasa_reducc = tasa_red(pesos_mutados);
-    double fit = fitness(tasa_clasif, tasa_reducc);
+      double tasa_clasif = tasa_clas(datos, pesos_mutados);
+      double tasa_reducc = tasa_red(pesos_mutados);
+      double fit = fitness(tasa_clasif, tasa_reducc);
+
+      
+
+
+      num_vecinos++;
+      num_iter++;
+    }
+
+    T0 = T0 / (1 + BETA * T0);
+
   }
+
+  if (mejor_solucion < solucion)
+    mejor_solucion = solucion;
+
+  return mejor_solucion.pesos;
 
 }
 
