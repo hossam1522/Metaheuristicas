@@ -31,10 +31,10 @@ BÚSQUEDA LOCAL MULTIARRANQUE BÁSICA (BMB)
 ************************************************************
 ************************************************************/
 
-arma::rowvec BMB (const Dataset &datos, const int &tamPoblacion, const int &maxIter){
+arma::rowvec BMB (const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
   Solucion mejor_solucion;
 
-  for (int i = 0; i < tamPoblacion; ++i){
+  for (int i = 0; i < num_ejecuciones; ++i){
     Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
     
     int iter = 0;
@@ -55,9 +55,10 @@ ENFRIAMIENTO SIMULADO (ES)
 ************************************************************
 ************************************************************/
 
-arma::rowvec ES(const Dataset &datos, const Solucion &solucion_pasada){
+Solucion ES(const Dataset &datos, const Solucion &solucion_pasada, const int &maxIter){
   uniform_int_distribution<int> distribucion_componente(0, datos.data.n_cols-1);
   normal_distribution<double> distribucion_normal(0.0, SIGMA);
+  uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
 
   Solucion solucion;
 
@@ -70,19 +71,19 @@ arma::rowvec ES(const Dataset &datos, const Solucion &solucion_pasada){
   double T0 = MU * solucion.fitness / -log(PHI);
 
   int num_vecinos = 0;
-  int num_exitos = 0;
+  int num_exitos = 1;
   int num_iter = 0;
   const double max_vecinos = MAX_VECINOS_ES*datos.data.n_cols;
   const double max_exitos = MAX_EXITOS * max_vecinos;
-  const double M = MAX_ITER_ES / max_vecinos;
+  const double M = maxIter / max_vecinos;
   const double BETA = (T0 - Tf) / (M * T0 * Tf);
 
-  while (num_iter < MAX_ITER_ES && num_exitos != 0){
+  while (num_iter < maxIter && num_exitos > 0){
     
     num_vecinos = 0;
     num_exitos = 0;
 
-    while (num_vecinos < max_vecinos && num_exitos < max_exitos && num_iter < MAX_ITER_ES){
+    while (num_vecinos < max_vecinos && num_exitos < max_exitos && num_iter < maxIter){
       arma::rowvec pesos_mutados = solucion.pesos;
       int componente = Random::get(distribucion_componente);
       pesos_mutados(componente) += Random::get(distribucion_normal);
@@ -94,8 +95,16 @@ arma::rowvec ES(const Dataset &datos, const Solucion &solucion_pasada){
       double tasa_reducc = tasa_red(pesos_mutados);
       double fit = fitness(tasa_clasif, tasa_reducc);
 
-      
+      double delta = solucion.fitness - fit;
 
+      if (delta < 0 || Random::get(distribucion_uniforme) <= exp(-delta / T0)){
+        solucion.pesos = pesos_mutados;
+        solucion.fitness = fit;
+        num_exitos++;
+
+        if (mejor_solucion < solucion)
+          mejor_solucion = solucion;
+      }
 
       num_vecinos++;
       num_iter++;
@@ -105,11 +114,73 @@ arma::rowvec ES(const Dataset &datos, const Solucion &solucion_pasada){
 
   }
 
-  if (mejor_solucion < solucion)
-    mejor_solucion = solucion;
+  return mejor_solucion;
+
+}
+
+/************************************************************
+************************************************************
+BÚSQUEDA LOCAL REITERADA (ILS)
+************************************************************
+************************************************************/
+
+Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const double &operadorMutacion){
+  uniform_int_distribution<int> distribucion_componente(0, solucion.pesos.n_cols-1);
+  uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
+
+  Solucion sol = solucion;
+  
+  int num_mutaciones = sol.pesos.n_cols * operadorMutacion;
+  num_mutaciones = min(num_mutaciones, 3);
+
+  for (int i = 0; i < num_mutaciones; ++i){
+    int componente = Random::get(distribucion_componente);
+    sol.pesos(componente) = Random::get(distribucion_uniforme);
+  }
+
+  double tasa_clasificacion = tasa_clas(datos, sol.pesos);
+  double tasa_reduccion = tasa_red(sol.pesos);
+  sol.fitness = fitness(tasa_clasificacion, tasa_reduccion);
+
+  return sol;
+}
+
+
+arma::rowvec ILS(const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
+  Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
+  int iter = 0;
+  sol = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, MAX_ITER);
+  Solucion mejor_solucion = sol;
+
+  for (int i = 0; i < num_ejecuciones-1; ++i){
+    Solucion mutacion = mutacion_ILS(datos, mejor_solucion, OPERADOR_MUTACION);
+    int iter = 0;
+    mutacion = busquedaLocal(datos, mutacion.pesos, iter, CONST_MAX_VECINOS, MAX_ITER_ILS);
+
+    if (mejor_solucion < mutacion)
+      mejor_solucion = mutacion;
+
+  }
 
   return mejor_solucion.pesos;
+}
 
+
+arma::rowvec ILS_ES(const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
+  Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
+  sol = ES(datos, sol, maxIter);
+  Solucion mejor_solucion = sol;
+
+  for (int i = 0; i < num_ejecuciones-1; ++i){
+    Solucion mutacion = mutacion_ILS(datos, mejor_solucion, OPERADOR_MUTACION);
+    mutacion = ES(datos, mutacion, maxIter);
+
+    if (mejor_solucion < mutacion)
+      mejor_solucion = mutacion;
+
+  }
+
+  return mejor_solucion.pesos;
 }
 
 /************************************************************
@@ -145,6 +216,14 @@ void printResultados(int algoritmo) {
     cout << "*********************** AM-(10,0.1) *****************************************" << endl;
   else if (algoritmo == 9)
     cout << "*********************** AM-(10,0.1mej) **************************************" << endl;
+  else if (algoritmo == 10)
+    cout << "*********************** BMB **************************************************" << endl;
+  else if (algoritmo == 11)
+    cout << "*********************** ES ***************************************************" << endl;
+  else if (algoritmo == 12)
+    cout << "*********************** ILS **************************************************" << endl;
+  else if (algoritmo == 13)
+    cout << "*********************** ILS-ES ************************************************" << endl;
   cout << "******************************************************************************" << endl;
   cout << "******************************************************************************" << endl;
 
@@ -203,6 +282,14 @@ void printResultados(int algoritmo) {
       cout << "************************************ " << nombre_archivo << " (AM-(10,0.1)) ********************************" << endl;
     else if (algoritmo == 9)
       cout << "************************************ " << nombre_archivo << " (AM-(10,0.1mej)) *****************************" << endl;
+    else if (algoritmo == 10)
+      cout << "************************************ " << nombre_archivo << " (BMB) ***************************************" << endl;
+    else if (algoritmo == 11)
+      cout << "************************************ " << nombre_archivo << " (ES) ****************************************" << endl;
+    else if (algoritmo == 12)
+      cout << "************************************ " << nombre_archivo << " (ILS) ***************************************" << endl;
+    else if (algoritmo == 13)
+      cout << "************************************ " << nombre_archivo << " (ILS-ES) ************************************" << endl;
 
     cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
@@ -299,6 +386,30 @@ void printResultados(int algoritmo) {
         momentoInicio = chrono::high_resolution_clock::now();
         // Vector de pesos para el algoritmo AM-(10,0.1mej)
         w = AM_Best(entrenamiento);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 10){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo BMB
+        w = BMB(entrenamiento, SOL_INICIAL, MAX_ITER_BMB);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 11){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo ES
+        w = ES(entrenamiento, Solucion(), MAX_ITER_ES).pesos;
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 12){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo ILS
+        w = ILS(entrenamiento, ITER_ILS, MAX_ITER_ILS);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 13){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo ILS-ES
+        w = ILS_ES(entrenamiento, ITER_ILS, MAX_ITER_ILS);
         momentoFin = chrono::high_resolution_clock::now();
       }
 

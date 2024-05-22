@@ -91,11 +91,11 @@ BÚSQUEDA LOCAL MULTIARRANQUE BÁSICA (BMB)
  * Función para obtener la mejor solución de una busqueda local multiarranque básica
  * 
  * @param datos Conjunto de datos
- * @param tamPoblacion Tamaño de la población
+ * @param num_ejecuciones Número de ejecuciones
  * @param maxIter Número máximo de iteraciones
  * @return arma::rowvec Pesos de las características de la mejor solución
  */
-arma::rowvec BMB (const Dataset &datos, const int &tamPoblacion, const int &maxIter);
+arma::rowvec BMB (const Dataset &datos, const int &num_ejecuciones, const int &maxIter);
 
 /************************************************************
 ************************************************************
@@ -109,15 +109,48 @@ ENFRIAMIENTO SIMULADO (ES)
  * 
  * @param datos Conjunto de datos
  * @param solucion Solución inicial
- * @return arma::rowvec Pesos de las características de la mejor solución
+ * @param maxIter Número máximo de iteraciones
+ * @return Solucion Mejor solución encontrada
  */
-arma::rowvec ES(const Dataset &datos, const Solucion &solucion);
+Solucion ES(const Dataset &datos, const Solucion &solucion, const int &maxIter);
 
 /************************************************************
 ************************************************************
 BÚSQUEDA LOCAL REITERADA (ILS)
 ************************************************************
 ************************************************************/
+
+/**
+ * @brief 
+ * Función para mutar una solución reiniciando el valor de los pesos de las características
+ * 
+ * @param solucion Solución a mutar
+ * @param operadorMutacion Operador de mutación
+ * @return Solucion Solución mutadas
+ */
+Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const double &operadorMutacion);
+
+/**
+ * @brief 
+ * Función para obtener la mejor solución de una búsqueda local reiterada
+ * 
+ * @param datos Conjunto de datos
+ * @param num_ejecuciones Número de ejecuciones
+ * @param maxIter Número máximo de iteraciones
+ * @return arma::rowvec Pesos de las características de la mejor solución
+ */
+arma::rowvec ILS(const Dataset &datos, const int &num_ejecuciones, const int &maxIter);
+
+/**
+ * @brief 
+ * Función para obtener la mejor solución de una búsqueda local reiterada con enfriamiento simulado
+ * 
+ * @param datos Conjunto de datos
+ * @param num_ejecuciones Número de ejecuciones
+ * @param maxIter Número máximo de iteraciones
+ * @return arma::rowvec Pesos de las características de la mejor solución
+ */
+arma::rowvec ILS_ES(const Dataset &datos, const int &num_ejecuciones, const int &maxIter);
 
 /************************************************************
 ************************************************************

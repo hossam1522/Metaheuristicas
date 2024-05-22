@@ -38,7 +38,7 @@ int main(int argc, char const **argv) {
   // printResultados(1);
 
   // Para algoritmo Búsqueda Local
-  // printResultados(2);
+  printResultados(2);
 
   // Para algoritmo AGG-BLX
   // printResultados(3);
@@ -53,13 +53,25 @@ int main(int argc, char const **argv) {
   // printResultados(6);
 
   // Para algoritmo AM-(10,1.0)
-  // printResultados(7);
+  printResultados(7);
 
   // Para algoritmo AM-(10,0.1)
   // printResultados(8);
 
   // Para algoritmo AM-(10,0.1mej)
   // printResultados(9);
+
+  // Para algoritmo BMB
+  printResultados(10);
+
+  // Para algoritmo ES
+  printResultados(11);
+
+  // Para algoritmo ILS
+  printResultados(12);
+
+  // Para algoritmo ILS con Enfriamiento Simulado
+  printResultados(13);
 
   return 0;
 }
