@@ -70,13 +70,18 @@ Solucion ES(const Dataset &datos, const Solucion &solucion_pasada, const int &ma
   Solucion mejor_solucion = solucion;
   double T0 = MU * solucion.fitness / -log(PHI);
 
+  double Tfinal = Tf;
+
+  while (Tfinal >= T0)
+    Tfinal = Tfinal / 10.0;
+
   int num_vecinos = 0;
   int num_exitos = 1;
   int num_iter = 0;
   const double max_vecinos = MAX_VECINOS_ES*datos.data.n_cols;
   const double max_exitos = MAX_EXITOS * max_vecinos;
   const double M = maxIter / max_vecinos;
-  const double BETA = (T0 - Tf) / (M * T0 * Tf);
+  const double BETA = (T0 - Tfinal) / (M * T0 * Tfinal);
 
   while (num_iter < maxIter && num_exitos > 0){
     
@@ -110,7 +115,7 @@ Solucion ES(const Dataset &datos, const Solucion &solucion_pasada, const int &ma
       num_iter++;
     }
 
-    T0 = T0 / (1 + BETA * T0);
+    T0 = T0 / (1.0 + BETA * T0);
 
   }
 

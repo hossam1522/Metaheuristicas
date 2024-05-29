@@ -26,7 +26,7 @@ const double PHI = 0.3;
 const double MU = 0.1;
 const double Tf = 0.001;
 const int MAX_VECINOS_ES = 10;
-const int MAX_EXITOS = 0.1;
+const double MAX_EXITOS = 0.1;
 const int MAX_ITER_ES = 15000;
 
 // Constantes Búsqueda Multiarranque Básica
