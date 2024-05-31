@@ -38,8 +38,7 @@ arma::rowvec BMB (const Dataset &datos, const int &num_ejecuciones, const int &m
     Solucion sol = solucion_aleatoria(datos);
     
     int iter = 0;
-    Solucion mutacion = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, 
-                                          maxIter);
+    Solucion mutacion = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, maxIter);
 
     if (mejor_solucion < mutacion)
       mejor_solucion = mutacion;
@@ -157,13 +156,13 @@ Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const doub
 arma::rowvec ILS(const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
   Solucion sol = solucion_aleatoria(datos);
   int iter = 0;
-  sol = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, MAX_ITER);
+  sol = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, maxIter);
   Solucion mejor_solucion = sol;
 
   for (int i = 0; i < num_ejecuciones-1; ++i){
     Solucion mutacion = mutacion_ILS(datos, mejor_solucion, OPERADOR_MUTACION);
     int iter = 0;
-    mutacion = busquedaLocal(datos, mutacion.pesos, iter, CONST_MAX_VECINOS, MAX_ITER_ILS);
+    mutacion = busquedaLocal(datos, mutacion.pesos, iter, CONST_MAX_VECINOS, maxIter);
 
     if (mejor_solucion < mutacion)
       mejor_solucion = mutacion;
