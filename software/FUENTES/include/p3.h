@@ -18,9 +18,6 @@ CONSTANTES GLOBALES
 ************************************************************
 ************************************************************/
 
-// Máximo número de iteraciones de la búsqueda local en ILS
-const int MAX_ITER_ILS_BL = 1000;
-
 // Constantes Enfriamiento Simulado
 const double PHI = 0.3;
 const double MU = 0.1;
@@ -75,10 +72,9 @@ FUNCIONES AUXILIARES
  * Función para generar una solución aleatoria
  * 
  * @param datos Conjunto de datos
- * @param tam Tamaño de la solución
  * @return Solucion Solución generada
  */
-Solucion solucion_aleatoria(const Dataset &datos ,const int &tam);
+Solucion solucion_aleatoria(const Dataset &datos);
 
 /************************************************************
 ************************************************************
@@ -124,6 +120,7 @@ BÚSQUEDA LOCAL REITERADA (ILS)
  * @brief 
  * Función para mutar una solución reiniciando el valor de los pesos de las características
  * 
+ * @param datos Conjunto de datos
  * @param solucion Solución a mutar
  * @param operadorMutacion Operador de mutación
  * @return Solucion Solución mutadas

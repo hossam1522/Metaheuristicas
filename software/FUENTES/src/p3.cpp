@@ -9,7 +9,7 @@ FUNCIONES AUXILIARES
 ************************************************************
 ************************************************************/
 
-Solucion solucion_aleatoria(const Dataset &datos ,const int &tam){
+Solucion solucion_aleatoria(const Dataset &datos){
   uniform_real_distribution<double> distribucion(0.0, 1.0);
   Solucion sol;
 
@@ -35,7 +35,7 @@ arma::rowvec BMB (const Dataset &datos, const int &num_ejecuciones, const int &m
   Solucion mejor_solucion;
 
   for (int i = 0; i < num_ejecuciones; ++i){
-    Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
+    Solucion sol = solucion_aleatoria(datos);
     
     int iter = 0;
     Solucion mutacion = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, 
@@ -63,7 +63,7 @@ Solucion ES(const Dataset &datos, const Solucion &solucion_pasada, const int &ma
   Solucion solucion;
 
   if (solucion_pasada.pesos.n_cols == 0)
-    solucion = solucion_aleatoria(datos, datos.data.n_cols);
+    solucion = solucion_aleatoria(datos);
   else 
     solucion = solucion_pasada;
 
@@ -131,7 +131,7 @@ BÚSQUEDA LOCAL REITERADA (ILS)
 
 Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const double &operadorMutacion){
   uniform_int_distribution<int> distribucion_componente(0, solucion.pesos.n_cols-1);
-  uniform_real_distribution<double> distribucion_uniforme(0.0, 1.0);
+  uniform_real_distribution<double> distribucion_uniforme(-0.25, 0.25);
 
   Solucion sol = solucion;
   
@@ -140,7 +140,10 @@ Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const doub
 
   for (int i = 0; i < num_mutaciones; ++i){
     int componente = Random::get(distribucion_componente);
-    sol.pesos(componente) = Random::get(distribucion_uniforme);
+    sol.pesos(componente) += Random::get(distribucion_uniforme);
+
+    if (sol.pesos(componente) < 0.0) sol.pesos(componente) = 0.0;
+    if (sol.pesos(componente) > 1.0) sol.pesos(componente) = 1.0;
   }
 
   double tasa_clasificacion = tasa_clas(datos, sol.pesos);
@@ -152,7 +155,7 @@ Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const doub
 
 
 arma::rowvec ILS(const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
-  Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
+  Solucion sol = solucion_aleatoria(datos);
   int iter = 0;
   sol = busquedaLocal(datos, sol.pesos, iter, CONST_MAX_VECINOS, MAX_ITER);
   Solucion mejor_solucion = sol;
@@ -172,7 +175,7 @@ arma::rowvec ILS(const Dataset &datos, const int &num_ejecuciones, const int &ma
 
 
 arma::rowvec ILS_ES(const Dataset &datos, const int &num_ejecuciones, const int &maxIter){
-  Solucion sol = solucion_aleatoria(datos, datos.data.n_cols);
+  Solucion sol = solucion_aleatoria(datos);
   sol = ES(datos, sol, maxIter);
   Solucion mejor_solucion = sol;
 
