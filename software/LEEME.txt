@@ -17,8 +17,11 @@ resultados.
 y Búsqueda Local. 
 
 - p2.cpp/p2.h: Archivo que contiene la implementación de los algoritmos genéticos generacionales,
-estacionarios y meméticos, además de las funciones comunes a estos algoritmos. También se encuentra aquí
-la función para mostrar los resultados.
+estacionarios y meméticos, además de las funciones comunes a estos algoritmos.
+
+- p3.cpp/p3.h: Archivo que contiene la implementación de los algoritmos de Enfriamiento Simulado,
+Búsqueda Local Reiterada, Búsqueda Multiarranque Básica y la hibridación de Búsqueda Local Reiterada con
+Enfriamiento Simulado. También se encuentra aquí la función para mostrar los resultados.
 
 - util.cpp/util.h: Archivo que contiene las funciones para leer y normalizar los datos, además
 de las funciones comunes a ambos algoritmos, como la distancia euclídea, el clasificador 1-NN
@@ -35,11 +38,11 @@ Para compilar el proyecto y ejecutar el proyecto, hay que seguir los siguientes 
 4. Situarse en el directorio software/BIN.
 5. Ejecutar el programa tal que:
 
-Uso: ./P2_MH <semilla> [<openmp>]
+Uso: ./P3_MH <semilla> [<openmp>]
 Donde:
   <semilla> es la semilla para el generador de números aleatorios
   <openmp> es un valor booleano opcional para activar/desactivar OpenMP (por defecto, es true)
      true: activa OpenMP   
      false: desactiva OpenMP
      Si se indica un valor distinto de true o false, se mantendrá el valor por defecto
-Ejemplo: ../BIN/P2_MH 97435 true
+Ejemplo: ../BIN/P3_MH 97435 true
