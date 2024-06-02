@@ -135,7 +135,7 @@ Solucion mutacion_ILS(const Dataset &datos, const Solucion &solucion, const doub
   Solucion sol = solucion;
   
   int num_mutaciones = sol.pesos.n_cols * operadorMutacion;
-  num_mutaciones = min(num_mutaciones, 3);
+  num_mutaciones = max(num_mutaciones, 3);
 
   for (int i = 0; i < num_mutaciones; ++i){
     int componente = Random::get(distribucion_componente);
