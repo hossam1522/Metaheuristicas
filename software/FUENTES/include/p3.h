@@ -59,6 +59,16 @@ struct Solucion {
   bool operator<(const Solucion &sol) const {
       return fitness < sol.fitness;
   }
+
+  // Operador de comparación de igualdad
+  bool operator==(const Solucion &sol) const {
+      return (arma::approx_equal(pesos, sol.pesos, "absdiff", 1e-10) && fitness == sol.fitness);
+  }
+
+  // Operador de comparación de desigualdad
+  bool operator!=(const Solucion &sol) const {
+      return !(*this == sol);
+  }
 };
 
 /************************************************************
@@ -169,7 +179,7 @@ FUNCIONES PARA MOSTRAR RESULTADOS
  *                  9 para AM-(10,0.1mej), 10 para BMB, 11 para ES, 12 para ILS y
  *                  13 para ILS con Enfriamiento Simulado
  */
-void printResultados(int algoritmo);
+//void printResultados(int algoritmo);
 
 
 #endif
