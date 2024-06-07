@@ -49,6 +49,9 @@ struct Solucion {
   // Constructor por defecto
   Solucion(){}
 
+  // Constructor por copia
+  Solucion(const Solucion &sol) : pesos(sol.pesos), fitness(sol.fitness) {}
+
   // Constructor con parámetros
   Solucion(const arma::rowvec &pesos, const double &fitness) : pesos(pesos), fitness(fitness) {}
 

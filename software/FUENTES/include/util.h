@@ -41,7 +41,7 @@ const int NUM_DATASETS = 3;
 const int NUM_PARTICIONES = 5;
 
 // Ponderación de la importancia entre el acierto y la reducción de la solución encontrada
-const double ALPHA = 0.8;
+const double ALPHA = 0.75;
 
 
 /************************************************************

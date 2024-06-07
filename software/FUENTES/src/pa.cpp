@@ -21,21 +21,139 @@ double sech(double x) {
     return 2.0 / (exp(x) + exp(-x));
 }
 
-arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, const double LW, const double UP){
+// N es tamaño de la poblacion
+// D es el tamaño de la solucion (numero de pesos) (dimensiones del problema de optimizacion)
+// L es VC2
+// W1 es weight4
+// W2 es weight3
+// R es vb
+// LH es 100 
+// E es VC1[]
+// Poblacion[] es X[]
+
+arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter){
   uniform_real_distribution<double> distribucion(0.0, 1.0);
+  normal_distribution<double> distribucion_normal(0.0, 1.0);
   
+  Solucion mejor_solucion;
+  mejor_solucion.fitness = numeric_limits<double>::min();
+  Solucion peor_solucion;
+  peor_solucion.fitness = numeric_limits<double>::max();
+  Population pos_poblacion_temp(tam_pob);
   Population poblacion(tam_pob);
-  vector<double> hunger(tam_pob, 0.0);
+  vector<double> hungry(tam_pob, 0.0);
+  vector<double> AllFitness(tam_pob);
+  vector<double> E(tam_pob, 1.0);
+
+  //arma::mat W1 = arma::ones<arma::mat>(tam_pob, datos.data.n_cols);
+  //arma::mat W2 = arma::ones<arma::mat>(tam_pob, datos.data.n_cols);
+  arma::mat W1 = arma::mat(tam_pob, datos.data.n_cols, arma::fill::ones);
+  arma::mat W2 = arma::mat(tam_pob, datos.data.n_cols, arma::fill::ones);
+  //vector<vector<double>> W1(tam_pob, vector<double>(datos.data.n_cols, 1.0));
+  //vector<vector<double>> W2(tam_pob, vector<double>(datos.data.n_cols, 1.0));
 
   // Inicializar la población
   for (int i = 0; i < tam_pob; ++i) {
     poblacion[i] = solucion_aleatoria(datos);
   }
 
+  int count = 0;
+
   // Bucle principal
-  for (int iter = 0; iter < maxIter; ++iter) {
+  for (int iter = 1; iter <= maxIter; ++iter) {
+
+    double suma_hungry = 0.0;
+
+    sort(poblacion.begin(), poblacion.end(), CompararSoluciones());
+
+    double bestFitness = poblacion[0].fitness;
+    double worstFitness = poblacion[tam_pob-1].fitness;
+
+    if (bestFitness > mejor_solucion.fitness) {
+      mejor_solucion = poblacion[0];
+      count = 0;
+    }
+
+    if (worstFitness < peor_solucion.fitness) {
+      peor_solucion = poblacion[tam_pob-1];
+    }
+
+    for (int i = 0; i < tam_pob; ++i) {
+      E[i] = sech(abs(poblacion[i].fitness - mejor_solucion.fitness));
+      if (mejor_solucion.fitness == poblacion[i].fitness) {
+        hungry[i] = 0;
+        if (count < tam_pob) {
+          pos_poblacion_temp[count] = poblacion[i];
+          ++count;
+        }
+      } else {
+        double temprand = Random::get(distribucion);
+        double c = (poblacion[i].fitness - mejor_solucion.fitness) / (peor_solucion.fitness - mejor_solucion.fitness) * temprand * 2.0;
+        double b = (c < LH) ? LH * (1 + temprand) : c;
+        hungry[i] += max(b, 0.0);
+        suma_hungry += hungry[i];
+      }
+    }
+
+    for (int i = 0; i < tam_pob; ++i) {
+      for (int j = 0; j < datos.data.n_cols; ++j) {
+        W1(i, j) = (Random::get(distribucion) < L) ? hungry[i] * tam_pob / suma_hungry * Random::get(distribucion) : 1.0;
+        W2(i, j) = (1.0 - exp(-abs(hungry[i] - suma_hungry))) * Random::get(distribucion) * 2;
+      }
+    }
+
+    double shrink = 2 * (1 - iter / (double)maxIter);
+    for (int i = 0; i < tam_pob; ++i) {
+      if (Random::get(distribucion) < L) {
+        for (int j = 1; j < datos.data.n_cols; ++j) {
+          poblacion[i].pesos[j] *= (1.0 + Random::get(distribucion_normal));
+        }
+      } else {
+        uniform_int_distribution<int> distribucion_int(0, count-1);
+        int A = Random::get(distribucion_int);
+        for (int j = 0; j < datos.data.n_cols; ++j) {
+          double r = Random::get(distribucion);
+          double R = 2 * shrink * r - shrink;
+          if (r > E[i]) {
+            poblacion[i].pesos[j] = W1(i, j) * pos_poblacion_temp[A].pesos[j] + R * W2(i, j) * abs(pos_poblacion_temp[A].pesos[j] - poblacion[i].pesos[j]);
+          } else {
+            poblacion[i].pesos[j] = W1(i, j) * pos_poblacion_temp[A].pesos[j] - R * W2(i, j) * abs(pos_poblacion_temp[A].pesos[j] - poblacion[i].pesos[j]);
+          }
+
+        }
+      }
+
+      poblacion[i].fitness = fitness(tasa_clas(datos, poblacion[i].pesos), tasa_red(poblacion[i].pesos));
+    }
+  }
+
+  return mejor_solucion.pesos;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Actualizar el mejor individuo
-    Solucion mejor_solucion = ordenar_poblacion(poblacion, 0);
+/*     Solucion mejor_solucion = ordenar_poblacion(poblacion, 0);
     Solucion peor_solucion = ordenar_poblacion(poblacion, tam_pob-1);
     int pos_mejor;
 
@@ -43,13 +161,13 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
     for (int i = 0; i < tam_pob; ++i) {
       if (poblacion[i] != mejor_solucion) {
         double a_sumar = (poblacion[i].fitness - mejor_solucion.fitness) / (peor_solucion.fitness - mejor_solucion.fitness);
-        a_sumar *= Random::get(distribucion) * 2.0 * (UP - LW);
+        a_sumar *= Random::get(distribucion) * 2.0;
         if (a_sumar < LH)
-          hunger[i] += LH*(1.0 + Random::get(distribucion));
+          hungry[i] += LH*(1.0 + Random::get(distribucion));
         else
-          hunger[i] += a_sumar;
+          hungry[i] += a_sumar;
       } else {
-        hunger[i] = 0.0;
+        hungry[i] = 0.0;
         pos_mejor = i;
       }
     }
@@ -57,10 +175,10 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
     // Actualizar los pesos del hambre de la población
     vector<double> W1(tam_pob);
     vector<double> W2(tam_pob);
-    double suma_hunger = 0.0;
+    double suma_hungry = 0.0;
 
     for (int i = 0; i < tam_pob; ++i) {
-      suma_hunger += hunger[i];
+      suma_hungry += hungry[i];
     }
 
     double r3 = Random::get(distribucion);
@@ -69,12 +187,12 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
 
     for (int i = 0; i < tam_pob; ++i) {
       if (r3 < L) {
-        W1[i] = hunger[i] * tam_pob * r4 / suma_hunger;
+        W1[i] = hungry[i] * tam_pob * r4 / suma_hungry;
       } else {
         W1[i] = 1.0;
       }
 
-      W2[i] = (1.0 - exp(-abs(hunger[i]-suma_hunger))) * r5 * 2;
+      W2[i] = (1.0 - exp(-abs(hungry[i]-suma_hungry))) * r5 * 2;
     }
 
     double r1 = Random::get(distribucion);
@@ -83,13 +201,12 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
     Population nueva_poblacion(tam_pob);
 
     for(int i = 0; i < tam_pob; ++i){
-      double E = sech(abs(hunger[i] - mejor_solucion.fitness));
       double shrink = 2 * (1.0 - iter/maxIter);
       double R = 2 * shrink * Random::get(distribucion) - shrink;
 
       if (r1 < L) {
         nueva_poblacion[i].pesos = poblacion[i].pesos * (1.0 + Random::get(distribucion_normal));
-      } else if (r2 > E){
+      } else if (r2 > E[i]){
         nueva_poblacion[i].pesos = W1[i]*pos_mejor + W2[i]* R * abs(pos_mejor - poblacion[i].pesos);
       } else {
         nueva_poblacion[i].pesos = W1[i]*pos_mejor - W2[i]* R * abs(pos_mejor - poblacion[i].pesos);
@@ -100,18 +217,18 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
     }
 
     poblacion = nueva_poblacion;
-  }
+  } 
 
   return ordenar_poblacion(poblacion, 0).pesos;
-}
+} */
 
 
-/* std::vector<double> hungerGamesSearch(int populationSize, int dimensions, int maxIterations, double lowerBound, double upperBound) {
+/* std::vector<double> hungryGamesSearch(int populationSize, int dimensions, int maxIterations, double lowerBound, double upperBound) {
     std::srand(std::time(0));
 
     std::vector<std::vector<double>> population(populationSize);
     std::vector<double> fitness(populationSize);
-    std::vector<double> hunger(populationSize, 0.0);
+    std::vector<double> hungry(populationSize, 0.0);
 
     // Initialize population
     for (int i = 0; i < populationSize; ++i) {
@@ -131,12 +248,12 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter, c
             }
         }
 
-        // Update hunger
+        // Update hungry
         for (int i = 0; i < populationSize; ++i) {
             if (i != bestIndex) {
-                hunger[i] += (fitness[i] - bestFitness) / (fitness[bestIndex] - bestFitness);
+                hungry[i] += (fitness[i] - bestFitness) / (fitness[bestIndex] - bestFitness);
             } else {
-                hunger[i] = 0.0;
+                hungry[i] = 0.0;
             }
         }
 
@@ -212,6 +329,8 @@ void printResultados(int algoritmo) {
     cout << "*********************** ILS **************************************************" << endl;
   else if (algoritmo == 13)
     cout << "*********************** ILS-ES ************************************************" << endl;
+  else if (algoritmo == 14)
+    cout << "*********************** HGS **************************************************" << endl;
   cout << "******************************************************************************" << endl;
   cout << "******************************************************************************" << endl;
 
@@ -278,6 +397,8 @@ void printResultados(int algoritmo) {
       cout << "************************************ " << nombre_archivo << " (ILS) ***************************************" << endl;
     else if (algoritmo == 13)
       cout << "************************************ " << nombre_archivo << " (ILS-ES) ************************************" << endl;
+    else if (algoritmo == 14)
+      cout << "************************************ " << nombre_archivo << " (HGS) ***************************************" << endl;
 
     cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
@@ -398,6 +519,12 @@ void printResultados(int algoritmo) {
         momentoInicio = chrono::high_resolution_clock::now();
         // Vector de pesos para el algoritmo ILS-ES
         w = ILS_ES(entrenamiento, ITER_ILS, MAX_ITER_ILS);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 14){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo HGS
+        w = HGS(entrenamiento, NUM_INDIVIDUOS_HGS, MAX_ITER_HGS);
         momentoFin = chrono::high_resolution_clock::now();
       }
 

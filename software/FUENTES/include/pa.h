@@ -21,6 +21,10 @@ CONSTANTES GLOBALES
 
 const double L = 0.08;
 const int LH = 10000;
+// 20
+const int NUM_INDIVIDUOS_HGS = 30;
+// 1000
+const int MAX_ITER_HGS = 1000;
 
 /************************************************************
 ************************************************************
@@ -32,7 +36,7 @@ typedef std::vector<Solucion> Population;
 
 struct CompararSoluciones {
   bool operator()(const Solucion &sol1, const Solucion &sol2) {
-    return sol1.fitness < sol2.fitness;
+    return sol1.fitness > sol2.fitness;
   }
 };
 
@@ -53,6 +57,10 @@ FUNCIONES AUXILIARES
  */
 Solucion ordenar_poblacion(const Population &poblacion, int pos);
 
+double sech(double x);
+
+arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter);
+
 /************************************************************
 ************************************************************
 FUNCIONES PARA MOSTRAR RESULTADOS
@@ -71,7 +79,7 @@ FUNCIONES PARA MOSTRAR RESULTADOS
  *                  3 para AGG-BLX, 4 para AGG-CA, 5 para AGE-BLX,
  *                  6 para AGE-CA, 7 para AM-(10,1.0), 8 para AM-(10,0.1),
  *                  9 para AM-(10,0.1mej), 10 para BMB, 11 para ES, 12 para ILS y
- *                  13 para ILS con Enfriamiento Simulado
+ *                  13 para ILS con Enfriamiento Simulado, 14 para HGS
  */
 void printResultados(int algoritmo);
 
