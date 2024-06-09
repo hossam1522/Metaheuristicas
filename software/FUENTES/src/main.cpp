@@ -74,7 +74,10 @@ int main(int argc, char const **argv) {
   // printResultados(13);
 
   // Para algoritmo HGS
-  printResultados(14);
+  // printResultados(14);
+
+  // Para algoritmo TSA
+  printResultados(15);
 
   return 0;
 }

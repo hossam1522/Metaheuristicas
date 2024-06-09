@@ -15,7 +15,12 @@ Solucion ordenar_poblacion(const Population &poblacion, int pos){
   return aux[pos];
 }
 
-/************************************************************/
+/************************************************************
+************************************************************
+HUNGER GAMES SEARCH (HGS)
+************************************************************
+************************************************************/
+
 // Función sech
 double sech(double x) {
     return 2.0 / (exp(x) + exp(-x));
@@ -60,7 +65,7 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter){
   int count = 0;
 
   // Bucle principal
-  for (int iter = 1; iter <= maxIter; ++iter) {
+  for (int iter = 1; iter <= maxIter; iter+=tam_pob) {
 
     double suma_hungry = 0.0;
 
@@ -130,163 +135,166 @@ arma::rowvec HGS(const Dataset &datos, const int &tam_pob, const int &maxIter){
   return mejor_solucion.pesos;
 }
 
+/************************************************************
+************************************************************
+TRIBUTE SELECTION ALGORITHM (TSA) - Heurística propia
+************************************************************
+************************************************************/
+
+// Selección por torneo binario
+Solucion seleccion_torneo(const Population& distrito) {
+  uniform_int_distribution<int> dis(0, distrito.size() - 1);
+    
+  int idx1 = Random::get(dis);
+  int idx2 = Random::get(dis);
+  
+  return distrito[idx1].fitness > distrito[idx2].fitness ? distrito[idx1] : distrito[idx2];
+}
+
+// Cruzamiento de dos individuos
+Solucion cruzamiento(const Dataset &datos, Solucion& padre1, const Solucion& padre2) {
+    /* random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(1, d - 1);
+    
+    int punto_corte = dis(gen);
+    vector<double> hijo(d);
+    copy(padre1.begin(), padre1.begin() + punto_corte, hijo.begin());
+    copy(padre2.begin() + punto_corte, padre2.end(), hijo.begin() + punto_corte);
+    return hijo; */
+
+  uniform_int_distribution<int> dis(0, padre1.pesos.size() - 1);
+  int punto_corte = Random::get(dis);
+  arma::rowvec hijo(padre1.pesos.size());
+  hijo.head(punto_corte) = padre1.pesos.head(punto_corte);
+  hijo.tail(padre1.pesos.size() - punto_corte) = padre2.pesos.tail(padre1.pesos.size() - punto_corte);
+  
+  return Solucion(hijo, fitness(tasa_clas(datos, hijo), tasa_red(hijo)));
+}
+
+// Mutación de un individuo
+void mutacion(Solucion& individuo) {
+    /* random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0, 1);
+    normal_distribution<> dis_normal(0, 0.1);
+    
+    for (auto& gen : individuo) {
+        if (dis(gen) < P_m) {
+            gen += dis_normal(gen);
+            gen = max(0.0, min(1.0, gen));
+        }
+    } */
+
+  uniform_real_distribution<double> distribucion(0.0, 1.0);
+  normal_distribution<double> distribucion_normal(0.0, 0.1);
+
+  for (int i = 0; i < individuo.pesos.size(); ++i) {
+    if (Random::get(distribucion) < PROB_MUTACION) {
+      individuo.pesos[i] += Random::get(distribucion_normal);
+      individuo.pesos[i] = max(0.0, min(1.0, individuo.pesos[i]));
+    }
+  }
+}
+
+arma::rowvec TSA(const Dataset &datos, const int &tam_pob, const int &maxIter){
+  uniform_real_distribution<double> distribucion(0.0, 1.0);
+
+  vector<Population> poblacion; // Vector de poblaciones teniendo en cuenta los distritos
+  for (int i = 0; i < NUM_DISTRITOS; ++i) {
+    Population distrito;
+    for (int j = 0; j < tam_pob; ++j) {
+      distrito.push_back(solucion_aleatoria(datos));
+    }
+    poblacion.push_back(distrito);
+  }
+
+  for (int iter = 0; iter < maxIter; iter+=tam_pob*NUM_DISTRITOS) {
+
+    // Competencia interna del distrito y alianzas
+    vector<Population> nueva_poblacion(NUM_DISTRITOS);
+    vector<pair<int, int>> alianzas;
+    for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
+      for (int i = 0; i < tam_pob; ++i) {
+        auto sobreviviente = seleccion_torneo(poblacion[distrito]);
+        nueva_poblacion[distrito].push_back(sobreviviente);
+      }
+
+      // Formar alianzas
+      if (Random::get(distribucion) < PROB_ALIANZA) {
+        uniform_int_distribution<int> dis(0, NUM_DISTRITOS - 1);
+        int aliado_distrito = Random::get(dis);
+        alianzas.push_back({distrito, aliado_distrito});
+      }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Actualizar el mejor individuo
-/*     Solucion mejor_solucion = ordenar_poblacion(poblacion, 0);
-    Solucion peor_solucion = ordenar_poblacion(poblacion, tam_pob-1);
-    int pos_mejor;
-
-    // Actualizar el hambre
-    for (int i = 0; i < tam_pob; ++i) {
-      if (poblacion[i] != mejor_solucion) {
-        double a_sumar = (poblacion[i].fitness - mejor_solucion.fitness) / (peor_solucion.fitness - mejor_solucion.fitness);
-        a_sumar *= Random::get(distribucion) * 2.0;
-        if (a_sumar < LH)
-          hungry[i] += LH*(1.0 + Random::get(distribucion));
-        else
-          hungry[i] += a_sumar;
-      } else {
-        hungry[i] = 0.0;
-        pos_mejor = i;
+      if ((double)rand() / RAND_MAX < PROB_ALIANZA) {
+        int aliado_distrito = rand() % NUM_DISTRITOS;
+        alianzas.push_back({distrito, aliado_distrito});
       }
     }
 
-    // Actualizar los pesos del hambre de la población
-    vector<double> W1(tam_pob);
-    vector<double> W2(tam_pob);
-    double suma_hungry = 0.0;
-
-    for (int i = 0; i < tam_pob; ++i) {
-      suma_hungry += hungry[i];
-    }
-
-    double r3 = Random::get(distribucion);
-    double r4 = Random::get(distribucion);
-    double r5 = Random::get(distribucion);
-
-    for (int i = 0; i < tam_pob; ++i) {
-      if (r3 < L) {
-        W1[i] = hungry[i] * tam_pob * r4 / suma_hungry;
-      } else {
-        W1[i] = 1.0;
+    // Traiciones
+    for (const auto& alianza : alianzas) {
+      if (Random::get(distribucion) < PROB_TRAICION) {
+        int traidor = Random::get(distribucion) < 0.5 ? 0 : 1;
+        if (traidor == 0) {
+          nueva_poblacion[alianza.first].pop_back();
+        } else {
+          nueva_poblacion[alianza.second].pop_back();
+        }
       }
-
-      W2[i] = (1.0 - exp(-abs(hungry[i]-suma_hungry))) * r5 * 2;
     }
 
-    double r1 = Random::get(distribucion);
-    double r2 = Random::get(distribucion);
-    normal_distribution<double> distribucion_normal(0.0, 0.25);
-    Population nueva_poblacion(tam_pob);
-
-    for(int i = 0; i < tam_pob; ++i){
-      double shrink = 2 * (1.0 - iter/maxIter);
-      double R = 2 * shrink * Random::get(distribucion) - shrink;
-
-      if (r1 < L) {
-        nueva_poblacion[i].pesos = poblacion[i].pesos * (1.0 + Random::get(distribucion_normal));
-      } else if (r2 > E[i]){
-        nueva_poblacion[i].pesos = W1[i]*pos_mejor + W2[i]* R * abs(pos_mejor - poblacion[i].pesos);
-      } else {
-        nueva_poblacion[i].pesos = W1[i]*pos_mejor - W2[i]* R * abs(pos_mejor - poblacion[i].pesos);
+    // Reproducción
+    Population hijos;
+    for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
+      for (int i = 0; i < tam_pob / 2; ++i) {
+        int idx1 = rand() % nueva_poblacion[distrito].size();
+        int idx2 = rand() % nueva_poblacion[distrito].size();
+        //auto hijo = cruzamiento(nueva_poblacion[distrito][idx1], nueva_poblacion[distrito][idx2]);
+        Solucion hijo = cruzamiento(datos, nueva_poblacion[distrito][idx1], nueva_poblacion[distrito][idx2]);
+        mutacion(hijo);
+        hijos.push_back(hijo);
       }
-
-      nueva_poblacion[i].fitness = fitness(tasa_clas(datos, nueva_poblacion[i].pesos), tasa_red(nueva_poblacion[i].pesos));
-
     }
 
-    poblacion = nueva_poblacion;
-  } 
-
-  return ordenar_poblacion(poblacion, 0).pesos;
-} */
-
-
-/* std::vector<double> hungryGamesSearch(int populationSize, int dimensions, int maxIterations, double lowerBound, double upperBound) {
-    std::srand(std::time(0));
-
-    std::vector<std::vector<double>> population(populationSize);
-    std::vector<double> fitness(populationSize);
-    std::vector<double> hungry(populationSize, 0.0);
-
-    // Initialize population
-    for (int i = 0; i < populationSize; ++i) {
-        population[i] = initializePosition(dimensions, lowerBound, upperBound);
-        fitness[i] = fitnessFunction(population[i]);
+    // Eventos especiales
+    int evento = rand() % 4; // 0: terremoto, 1: incendio, 2: beneficio, 3: nada
+    if (evento == 0) { // Terremoto
+      int distrito_afectado = rand() % NUM_DISTRITOS;
+      nueva_poblacion[distrito_afectado].resize(nueva_poblacion[distrito_afectado].size() / 2);
+    } else if (evento == 1) { // Incendio
+      int distrito_afectado = rand() % NUM_DISTRITOS;
+      nueva_poblacion[distrito_afectado].erase(nueva_poblacion[distrito_afectado].begin(), nueva_poblacion[distrito_afectado].begin() + nueva_poblacion[distrito_afectado].size() / 2);
+    } else if (evento == 2) { // Beneficio
+      int distrito_beneficiado = rand() % NUM_DISTRITOS;
+      nueva_poblacion[distrito_beneficiado].insert(nueva_poblacion[distrito_beneficiado].end(), hijos.begin(), hijos.begin() + hijos.size() / NUM_DISTRITOS);
     }
 
-    // Main loop
-    for (int iteration = 0; iteration < maxIterations; ++iteration) {
-        // Update best individual
-        double bestFitness = std::numeric_limits<double>::max();
-        int bestIndex = 0;
-        for (int i = 0; i < populationSize; ++i) {
-            if (fitness[i] < bestFitness) {
-                bestFitness = fitness[i];
-                bestIndex = i;
-            }
-        }
-
-        // Update hungry
-        for (int i = 0; i < populationSize; ++i) {
-            if (i != bestIndex) {
-                hungry[i] += (fitness[i] - bestFitness) / (fitness[bestIndex] - bestFitness);
-            } else {
-                hungry[i] = 0.0;
-            }
-        }
-
-        // Update positions
-        for (int i = 0; i < populationSize; ++i) {
-            std::vector<double> newPosition(dimensions);
-            for (int d = 0; d < dimensions; ++d) {
-                double r1 = static_cast<double>(rand()) / RAND_MAX;
-                double r2 = static_cast<double>(rand()) / RAND_MAX;
-                if (r1 < 0.5) {
-                    newPosition[d] = population[i][d] * (1.0 + r2);
-                } else {
-                    newPosition[d] = population[bestIndex][d] + r2 * (population[bestIndex][d] - population[i][d]);
-                }
-                if (newPosition[d] < lowerBound) newPosition[d] = lowerBound;
-                if (newPosition[d] > upperBound) newPosition[d] = upperBound;
-            }
-            population[i] = newPosition;
-            fitness[i] = fitnessFunction(newPosition);
-        }
+    // Reemplazo
+    for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
+      while (nueva_poblacion[distrito].size() < tam_pob) {
+        int hijo_idx = rand() % hijos.size();
+        nueva_poblacion[distrito].push_back(hijos[hijo_idx]);
+      }
+      poblacion[distrito] = nueva_poblacion[distrito];
     }
+  }
 
-    // Return the best solution
-    double bestFitness = std::numeric_limits<double>::max();
-    int bestIndex = 0;
-    for (int i = 0; i < populationSize; ++i) {
-        if (fitness[i] < bestFitness) {
-            bestFitness = fitness[i];
-            bestIndex = i;
-        }
+  // Devolver el mejor individuo de la población
+  Solucion mejor_solucion;
+  mejor_solucion.fitness = numeric_limits<double>::min();
+  for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
+    for (const auto& individuo : poblacion[distrito]) {
+      if (individuo.fitness > mejor_solucion.fitness) {
+        mejor_solucion = individuo;
+      }
     }
-    return population[bestIndex];
-} */
+  }
+
+  return mejor_solucion.pesos;
+}
 
 /************************************************************
 ************************************************************
@@ -331,6 +339,8 @@ void printResultados(int algoritmo) {
     cout << "*********************** ILS-ES ************************************************" << endl;
   else if (algoritmo == 14)
     cout << "*********************** HGS **************************************************" << endl;
+  else if (algoritmo == 15)
+    cout << "*********************** TSA **************************************************" << endl;
   cout << "******************************************************************************" << endl;
   cout << "******************************************************************************" << endl;
 
@@ -399,6 +409,8 @@ void printResultados(int algoritmo) {
       cout << "************************************ " << nombre_archivo << " (ILS-ES) ************************************" << endl;
     else if (algoritmo == 14)
       cout << "************************************ " << nombre_archivo << " (HGS) ***************************************" << endl;
+    else if (algoritmo == 15)
+      cout << "************************************ " << nombre_archivo << " (TSA) ***************************************" << endl;
 
     cout << endl << "....................................................................................................." << endl;
     cout << "::: Particion ::: Tasa de Clasificacion (%) ::: Tasa de Reduccion (%) ::: Fitness ::: Tiempo (s)  :::" << endl;
@@ -525,6 +537,12 @@ void printResultados(int algoritmo) {
         momentoInicio = chrono::high_resolution_clock::now();
         // Vector de pesos para el algoritmo HGS
         w = HGS(entrenamiento, NUM_INDIVIDUOS_HGS, MAX_ITER_HGS);
+        momentoFin = chrono::high_resolution_clock::now();
+      }
+      else if (algoritmo == 15){
+        momentoInicio = chrono::high_resolution_clock::now();
+        // Vector de pesos para el algoritmo TSA
+        w = TSA(entrenamiento, NUM_INDIVIDUOS_TSA, MAX_ITER_TSA);
         momentoFin = chrono::high_resolution_clock::now();
       }
 
