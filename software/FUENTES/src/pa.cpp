@@ -141,100 +141,91 @@ TRIBUTE SELECTION ALGORITHM (TSA) - Heurística propia
 ************************************************************
 ************************************************************/
 
-// Selección por torneo binario
-Solucion seleccion_torneo(const Population& distrito) {
-  uniform_int_distribution<int> dis(0, distrito.size() - 1);
-    
-  int idx1 = Random::get(dis);
-  int idx2 = Random::get(dis);
+
+Solucion seleccion(const Population& distrito) {
+  uniform_int_distribution<int> distribucion_uniforme(0, distrito.size() - 1);
   
-  return distrito[idx1].fitness > distrito[idx2].fitness ? distrito[idx1] : distrito[idx2];
+  Solucion mejor;
+  mejor.fitness = -1;
+
+  vector<int> indices;
+  for (size_t i = 0; i < 3; ++i) {
+    int idx = Random::get(distribucion_uniforme);
+    while (find(indices.begin(), indices.end(), idx) != indices.end()) {
+      idx = Random::get(distribucion_uniforme);
+    }
+    indices.push_back(idx);
+    Solucion solucion = distrito[idx];
+    if (solucion.fitness > mejor.fitness) {
+      mejor = solucion;
+    }
+  } 
+
+  return mejor;
 }
 
 // Cruzamiento de dos individuos
 Solucion cruzamiento(const Dataset &datos, Solucion& padre1, const Solucion& padre2) {
-    /* random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<> dis(1, d - 1);
-    
-    int punto_corte = dis(gen);
-    vector<double> hijo(d);
-    copy(padre1.begin(), padre1.begin() + punto_corte, hijo.begin());
-    copy(padre2.begin() + punto_corte, padre2.end(), hijo.begin() + punto_corte);
-    return hijo; */
+    arma::rowvec hijo(padre1.pesos.size());
+    for (size_t i = 0; i < padre1.pesos.size(); ++i) {
+        double Cmin = std::min(padre1.pesos(i), padre2.pesos(i));
+        double Cmax = std::max(padre1.pesos(i), padre2.pesos(i));
+        double I = Cmax - Cmin;
+        double lower_bound = Cmin - ALPHA_BLX * I;
+        double upper_bound = Cmax + ALPHA_BLX * I;
+        std::uniform_real_distribution<double> dis(lower_bound, upper_bound);
+        hijo(i) = Random::get(dis);
 
-  uniform_int_distribution<int> dis(0, padre1.pesos.size() - 1);
-  int punto_corte = Random::get(dis);
-  arma::rowvec hijo(padre1.pesos.size());
-  hijo.head(punto_corte) = padre1.pesos.head(punto_corte);
-  hijo.tail(padre1.pesos.size() - punto_corte) = padre2.pesos.tail(padre1.pesos.size() - punto_corte);
-  
-  return Solucion(hijo, fitness(tasa_clas(datos, hijo), tasa_red(hijo)));
+        if (hijo(i) < 0.0) hijo(i) = 0.0;
+        if (hijo(i) > 1.0) hijo(i) = 1.0;
+    }
+    return Solucion(hijo, fitness(tasa_clas(datos, hijo), tasa_red(hijo)));
 }
 
 // Mutación de un individuo
 void mutacion(Solucion& individuo) {
-    /* random_device rd;
-    mt19937 gen(rd());
-    uniform_real_distribution<> dis(0, 1);
-    normal_distribution<> dis_normal(0, 0.1);
-    
-    for (auto& gen : individuo) {
-        if (dis(gen) < P_m) {
-            gen += dis_normal(gen);
-            gen = max(0.0, min(1.0, gen));
+    normal_distribution<double> distribucion(0.0, SIGMA);
+    uniform_int_distribution<int> distribucion_posicion(0, individuo.pesos.size() - 1);
+
+    for (int i = 0; i < individuo.pesos.size(); ++i) {
+        if (Random::get(distribucion) < PROB_MUTACION) {
+            individuo.pesos(i) += Random::get(distribucion);
+            if (individuo.pesos(i) < 0.0) individuo.pesos(i) = 0.0;
+            if (individuo.pesos(i) > 1.0) individuo.pesos(i) = 1.0;
         }
-    } */
-
-  uniform_real_distribution<double> distribucion(0.0, 1.0);
-  normal_distribution<double> distribucion_normal(0.0, 0.1);
-
-  for (int i = 0; i < individuo.pesos.size(); ++i) {
-    if (Random::get(distribucion) < PROB_MUTACION) {
-      individuo.pesos[i] += Random::get(distribucion_normal);
-      individuo.pesos[i] = max(0.0, min(1.0, individuo.pesos[i]));
     }
-  }
 }
 
-arma::rowvec TSA(const Dataset &datos, const int &tam_pob, const int &maxIter){
+
+arma::rowvec TSA(const Dataset &datos, const int &tam_pob, const int &maxIter) {
   uniform_real_distribution<double> distribucion(0.0, 1.0);
 
-  vector<Population> poblacion; // Vector de poblaciones teniendo en cuenta los distritos
+  vector<Population> poblacion(NUM_DISTRITOS);
   for (int i = 0; i < NUM_DISTRITOS; ++i) {
     Population distrito;
     for (int j = 0; j < tam_pob; ++j) {
       distrito.push_back(solucion_aleatoria(datos));
     }
-    poblacion.push_back(distrito);
+    poblacion[i] = distrito;
   }
 
   for (int iter = 0; iter < maxIter; iter+=tam_pob*NUM_DISTRITOS) {
-
-    // Competencia interna del distrito y alianzas
     vector<Population> nueva_poblacion(NUM_DISTRITOS);
     vector<pair<int, int>> alianzas;
+    
     for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
       for (int i = 0; i < tam_pob; ++i) {
-        auto sobreviviente = seleccion_torneo(poblacion[distrito]);
+        auto sobreviviente = seleccion(poblacion[distrito]);
         nueva_poblacion[distrito].push_back(sobreviviente);
       }
 
-      // Formar alianzas
       if (Random::get(distribucion) < PROB_ALIANZA) {
         uniform_int_distribution<int> dis(0, NUM_DISTRITOS - 1);
         int aliado_distrito = Random::get(dis);
         alianzas.push_back({distrito, aliado_distrito});
       }
-
-
-      if ((double)rand() / RAND_MAX < PROB_ALIANZA) {
-        int aliado_distrito = rand() % NUM_DISTRITOS;
-        alianzas.push_back({distrito, aliado_distrito});
-      }
     }
 
-    // Traiciones
     for (const auto& alianza : alianzas) {
       if (Random::get(distribucion) < PROB_TRAICION) {
         int traidor = Random::get(distribucion) < 0.5 ? 0 : 1;
@@ -246,43 +237,42 @@ arma::rowvec TSA(const Dataset &datos, const int &tam_pob, const int &maxIter){
       }
     }
 
-    // Reproducción
     Population hijos;
     for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
       for (int i = 0; i < tam_pob / 2; ++i) {
-        int idx1 = rand() % nueva_poblacion[distrito].size();
-        int idx2 = rand() % nueva_poblacion[distrito].size();
-        //auto hijo = cruzamiento(nueva_poblacion[distrito][idx1], nueva_poblacion[distrito][idx2]);
+        uniform_int_distribution<int> indices(0, nueva_poblacion[distrito].size() - 1);
+        int idx1 = Random::get(indices);
+        int idx2 = Random::get(indices);
         Solucion hijo = cruzamiento(datos, nueva_poblacion[distrito][idx1], nueva_poblacion[distrito][idx2]);
         mutacion(hijo);
         hijos.push_back(hijo);
       }
     }
 
-    // Eventos especiales
-    int evento = rand() % 4; // 0: terremoto, 1: incendio, 2: beneficio, 3: nada
-    if (evento == 0) { // Terremoto
-      int distrito_afectado = rand() % NUM_DISTRITOS;
+    uniform_int_distribution<int> eventos(0, 3);
+    int evento = Random::get(eventos);
+    uniform_int_distribution<int> distritos(0, NUM_DISTRITOS - 1);
+    if (evento == 0) {
+      int distrito_afectado = Random::get(distritos);
       nueva_poblacion[distrito_afectado].resize(nueva_poblacion[distrito_afectado].size() / 2);
-    } else if (evento == 1) { // Incendio
-      int distrito_afectado = rand() % NUM_DISTRITOS;
+    } else if (evento == 1) {
+      int distrito_afectado = Random::get(distritos);
       nueva_poblacion[distrito_afectado].erase(nueva_poblacion[distrito_afectado].begin(), nueva_poblacion[distrito_afectado].begin() + nueva_poblacion[distrito_afectado].size() / 2);
-    } else if (evento == 2) { // Beneficio
-      int distrito_beneficiado = rand() % NUM_DISTRITOS;
+    } else if (evento == 2) {
+      int distrito_beneficiado = Random::get(distritos);
       nueva_poblacion[distrito_beneficiado].insert(nueva_poblacion[distrito_beneficiado].end(), hijos.begin(), hijos.begin() + hijos.size() / NUM_DISTRITOS);
     }
 
-    // Reemplazo
     for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
       while (nueva_poblacion[distrito].size() < tam_pob) {
-        int hijo_idx = rand() % hijos.size();
+        uniform_int_distribution<int> indice(0, hijos.size() - 1);
+        int hijo_idx = Random::get(indice);
         nueva_poblacion[distrito].push_back(hijos[hijo_idx]);
       }
       poblacion[distrito] = nueva_poblacion[distrito];
     }
   }
 
-  // Devolver el mejor individuo de la población
   Solucion mejor_solucion;
   mejor_solucion.fitness = numeric_limits<double>::min();
   for (int distrito = 0; distrito < NUM_DISTRITOS; ++distrito) {
